@@ -3,42 +3,40 @@
 # 仅视频长任务 Submit/Get 使用；启动不会自动执行 migrations/。
 database:
   dsn: "postgres://modelhub:modelhub@127.0.0.1:5432/modelhub?sslmode=disable"
-
 # 每个 provider 实例声明其承载的真实模型 ID；同一模型可被多个实例声明，但必须由顶层 model_routes 显式选定当前走哪一个。
 # 字面量清单见 models 包，调用方引用 github.com/wgdl666/wgModelHub/models，禁止在这里发明 alias。
 providers:
-  gemini_main:
+  Gemini_Developer_API_gemini_main:
     # 3.8 与 3.5-flash-lite 与既有 Gemini 文本共用同一官方 Gemini provider 实例。
     models: [gemini-3.5-flash, gemini-3.1-pro-preview, gemini-2.5-flash, gemini-3.7-flash, gemini-3.8-flash, gemini-3.5-flash-lite]
     gemini:
       api_key: "${GEMINI_API_KEY}"
       proxy_url: ""
-  muse_gpt:
+  api.example.com:
     models: [gpt-5.4]
     openai:
       api_key: "${OMINILINK_API_KEY}"
       base_url: https://api.example.com/v1
-  fashion_embedding:
+  fashion-embedding.model.wgdl.tech:
     models: [fashion-embedding]
     fashion:
       base_url: https://fashion-embedding.model.wgdl.tech
       username: "${FASHION_USERNAME}"
       password: "${FASHION_PASSWORD}"
-  fashion_reranker:
+  fashion-reranker.model.wgdl.tech:
     models: [fashion-reranker]
     fashion:
       base_url: https://fashion-reranker.model.wgdl.tech
       username: "${FASHION_USERNAME}"
       password: "${FASHION_PASSWORD}"
-  aliyun_image_seg:
+  阿里云图像分割:
     models: [aliyun-segment-body, aliyun-segment-hd-body, aliyun-segment-commodity, aliyun-segment-common]
     image_seg:
       endpoint: imageseg.cn-shanghai.aliyuncs.com
       access_key_id: "${ALIYUN_ACCESS_KEY_ID}"
       access_key_secret: "${ALIYUN_ACCESS_KEY_SECRET}"
-
   # Vertex Express 文本：只配 api_key。短路径 publishers/google/models，不带 project。
-  vertex_chat:
+  Vertex_AI_chat:
     models: [gemini-2.0-flash-001]
     vertexai:
       api_key: "${VERTEX_API_KEY}"
@@ -47,99 +45,99 @@ providers:
   # project 必须显式配置；location 固定 global，不写在这里。密钥仍是 Express API key，不走 ADC。
   # 分辨率原样下发 1K/2K/4K。思考推荐 MINIMAL/MEDIUM/HIGH；LOW 原样下发，上游会拒绝。
   # 官方不支持 temperature；设置了会原样下发并返回上游错误。
-  vertex_nano_banana:
+  Vertex_AI_nano_banana:
     models: [gemini-nano-banana-2.1]
     vertexai:
       api_key: "${VERTEX_API_KEY}"
       project: "${VERTEX_PROJECT}"
-  ark_chat:
+  火山方舟_ark_chat:
     models: [doubao-seed-1.6]
     ark:
       api_key: "${ARK_API_KEY}"
       base_url: https://ark.cn-beijing.volces.com/api/v3
-  # Doubao Seed 2.0 mini：对外 doubao-seed-2.0-mini，上游走独立推理 endpoint，与 ark_chat 分实例。
-  ark_doubao_mini:
+  # Doubao Seed 2.0 mini：对外 doubao-seed-2.0-mini，上游走独立推理 endpoint，与 火山方舟_ark_chat 分实例。
+  火山方舟_ark_doubao_mini:
     models: [doubao-seed-2.0-mini]
     ark:
       api_key: "${ARK_API_KEY}"
       base_url: https://ark.cn-beijing.volces.com/api/v3
       endpoint_id: ep-20260901122606-bcxpg
   # Doubao Seed 2.0 lite：对外 doubao-seed-2.0-lite，独立 endpoint，不得与 mini 共用部署。
-  ark_doubao_lite:
+  火山方舟_ark_doubao_lite:
     models: [doubao-seed-2.0-lite]
     ark:
       api_key: "${ARK_API_KEY}"
       base_url: https://ark.cn-beijing.volces.com/api/v3
       endpoint_id: ep-20260901133933-xqknf
   # Doubao Seed 2.1 Pro：衣橱候选搭配等文本链路；与 mini/lite/1.6 分实例，避免共用 endpoint 路由歧义。
-  ark_doubao_21_pro:
+  火山方舟_ark_doubao_21_pro:
     models: [doubao-seed-2.1-pro]
     ark:
       api_key: "${ARK_API_KEY}"
       base_url: https://ark.cn-beijing.volces.com/api/v3
       endpoint_id: ep-20260902131944-rj4cb
-  # DeepSeek-V4-Flash 正式版：对外 deepseek-v4-flash，上游走独立推理 endpoint，与 Doubao/ark_chat 分实例。
-  ark_deepseek_v4_flash:
+  # DeepSeek-V4-Flash 正式版：对外 deepseek-v4-flash，上游走独立推理 endpoint，与 Doubao/火山方舟_ark_chat 分实例。
+  火山方舟_ark_deepseek_v4_flash:
     models: [deepseek-v4-flash]
     ark:
       api_key: "${ARK_API_KEY}"
       base_url: https://ark.cn-beijing.volces.com/api/v3
       endpoint_id: ep-20260904161804-km74x
   # DeepSeek-V4.1-Flash：新增独立 provider，不是切换 V4；对外 deepseek-v4.1-flash，绑定独立 endpoint。
-  ark_deepseek_v41_flash:
+  火山方舟_ark_deepseek_v41_flash:
     models: [deepseek-v4.1-flash]
     ark:
       api_key: "${ARK_API_KEY}"
       base_url: https://ark.cn-beijing.volces.com/api/v3
       endpoint_id: ep-20260916172350-hv45h
-  # 方舟 Seedance 2.5 文生视频 / 首帧图生视频；与 ark_chat 分实例，避免文本 Responses 与视频任务混用能力集。
-  ark_video:
+  # 方舟 Seedance 2.5 文生视频 / 首帧图生视频；与 火山方舟_ark_chat 分实例，避免文本 Responses 与视频任务混用能力集。
+  火山方舟_ark_video:
     models: [doubao-seedance-2-5-260628]
     ark_video:
       api_key: "${ARK_API_KEY}"
       base_url: https://ark.cn-beijing.volces.com/api/v3
       poll_interval: 3
   # Quick Speech：DashScope OpenAI-compatible，模型 ID 与线上一致。
-  quick_speech:
+  阿里云百炼_openai_quick_speech:
     models: [qwen-flash, qwen3.7-plus, qwen3.8-max, kimi/kimi-k3]
     openai:
       api_key: "${DASHSCOPE_API_KEY}"
       base_url: https://dashscope.aliyuncs.com/compatible-mode/v1
   # Async 视觉：独立 OpenAI-compatible 实例，避免与 speech/candidate 共用路由。
-  async_vision:
+  阿里云百炼_openai_async_vision:
     models: [qwen3-vl-plus]
     openai:
       api_key: "${ASYNC_VISION_API_KEY}"
       base_url: https://dashscope.aliyuncs.com/compatible-mode/v1
   # Async 深度推荐候选：与 vision 分实例，便于独立密钥与配额。
-  async_candidate:
+  阿里云百炼_openai_async_candidate:
     models: [qwen3.5-flash]
     openai:
       api_key: "${ASYNC_CANDIDATE_API_KEY}"
       base_url: https://dashscope.aliyuncs.com/compatible-mode/v1
   # Hub 主对话：ThinkingDisabled 会由统一协议直接映射为 enable_thinking=false。
   # qwen3.8-flash 与 3.7 同属 DashScope 文本能力集（function calling / thinking / ephemeral cache）。
-  hub_chat:
+  阿里云百炼_openai_hub_chat:
     models: [qwen3.7-flash, qwen3.8-flash]
     openai:
       api_key: "${DASHSCOPE_API_KEY}"
       base_url: https://dashscope.aliyuncs.com/compatible-mode/v1
   # Claude Haiku 4.5：固定官方快照 ID；用既有 OpenAI-compatible provider 类型指向 Anthropic 官方兼容端点，
   # 不新增只转发的 Anthropic provider 类型；不得下发 DashScope enable_thinking / cache_control。
-  anthropic_claude:
+  api.anthropic.com:
     models: [claude-haiku-4-5-20251001]
     openai:
       api_key: "${ANTHROPIC_API_KEY}"
       base_url: https://api.anthropic.com/v1
   # 智谱 GLM-5.3-flash：原生多模态文本，OpenAI-compatible Chat Completions。
   # 不发 thinking.type=disabled（智谱会拒绝）；关思考改为 reasoning_effort=low。
-  zhipu_glm:
+  智谱:
     models: [glm-5.3-flash]
     openai:
       api_key: "${ZHIPU_API_KEY}"
       base_url: https://open.bigmodel.cn/api/paas/v4
   # 同步一次性 TTS：与线上 wgHub Minimax WebSocket 对齐；输出固定 MP3/16kHz/mono。
-  minimax_tts:
+  MiniMax:
     models: [speech-2.8-turbo]
     minimax_tts:
       api_key: "${MINIMAX_API_KEY}"
@@ -148,7 +146,7 @@ providers:
       voice_id: "Chinese (Mandarin)_Warm_Girl"
   # ElevenLabs 同步 TTS：低延迟 flash 含中文；voice_id 由路演配置注入，示例勿填真实密钥。
   # stability/similarity_boost/style/speed 对应控制台滑条；省略则不覆盖音色账号默认。
-  elevenlabs_tts:
+  ElevenLabs:
     models: [eleven_flash_v2_5]
     elevenlabs_tts:
       api_key: "${ELEVENLABS_API_KEY}"
@@ -160,53 +158,53 @@ providers:
       similarity_boost: 0.30
       style: 0.50
   # 实时 ASR 按厂家分实例；缺凭据时该实例和模型路由会被跳过，便于 CN/海外共用模板。
-  volcengine_asr:
+  火山语音:
     models: [volcengine-bigmodel-streaming]
     volcengine_asr:
       api_key: "${VOLCENGINE_ASR_API_KEY}"
       resource_id: volc.seedasr.sauc.duration
       url: wss://openspeech.bytedance.com/api/v3/sauc/bigmodel_async
-  aliyun_asr:
+  nls-gateway.cn-shanghai.aliyuncs.com:
     models: [aliyun-nls]
     aliyun_asr:
       app_key: "${ALIYUN_NLS_APP_KEY}"
       token: "${ALIYUN_NLS_TOKEN}"
       ak_id: "${ALIYUN_NLS_AK_ID}"
       ak_key: "${ALIYUN_NLS_AK_KEY}"
-  fun_asr:
+  "阿里云_MaaS_${DASHSCOPE_WORKSPACE_ID}_fun_asr":
     models: [fun-asr-realtime]
     fun_asr:
       api_key: "${DASHSCOPE_API_KEY}"
       workspace_id: "${DASHSCOPE_WORKSPACE_ID}"
-  qwen_asr:
+  "阿里云_MaaS_${DASHSCOPE_WORKSPACE_ID}_qwen_asr":
     models: [qwen3-asr-flash-realtime-2026-02-10]
     qwen_asr:
       api_key: "${DASHSCOPE_API_KEY}"
       workspace_id: "${DASHSCOPE_WORKSPACE_ID}"
-  tencent_asr:
+  腾讯云语音:
     models: [16k_zh]
     tencent_asr:
       app_id: "${TENCENT_ASR_APP_ID}"
       secret_id: "${TENCENT_ASR_SECRET_ID}"
       secret_key: "${TENCENT_ASR_SECRET_KEY}"
-  assemblyai_asr:
+  AssemblyAI:
     models: [universal-3-5-pro]
     assemblyai_asr:
       api_key: "${ASSEMBLYAI_API_KEY}"
       url: wss://streaming.assemblyai.com/v3/ws
-  deepgram_asr:
+  Deepgram:
     models: [nova-3]
     deepgram_asr:
       api_key: "${DEEPGRAM_API_KEY}"
       url: wss://api.deepgram.com/v1/listen
-  soniox_asr:
+  stt-rt.soniox.com:
     models: [stt-rt-v5]
     soniox_asr:
       api_key: "${SONIOX_API_KEY}"
       url: wss://stt-rt.soniox.com/transcribe-websocket
   # 当前生图主渠道：api.aig-ai.com 上的 Gemini generateContent（非 OpenAI Images）。
-  # gemini-3-pro-image 仅绑此实例；两个 flash-image 与 aws_gemini 双声明，由 model_routes 手动切换。
-  aig_gemini_image:
+  # gemini-3-pro-image 仅绑此实例；两个 flash-image 与 Gemini_Developer_API_aws_gemini 双声明，由 model_routes 手动切换。
+  AIG_gemini:
     models:
       - gemini-3-pro-image
       - gemini-2.5-flash-image
@@ -215,16 +213,16 @@ providers:
       api_key: "${AIG_GEMINI_IMAGE_API_KEY}"
       base_url: https://api.aig-ai.com
   # AWS ECS workflow 备用渠道：仍用现有 gemini provider，留空 base_url 直连 Google 官方 Gemini API；不是 Bedrock。
-  aws_gemini:
+  Gemini_Developer_API_aws_gemini:
     models:
       - gemini-2.5-flash-image
       - gemini-3.1-flash-image
     gemini:
       api_key: "${AWS_GEMINI_API_KEY}"
       # base_url 留空：google.golang.org/genai BackendGeminiAPI 默认官方 endpoint。
-  # GPT Image 2 / 2.5：现网 async_gpt_image（api.aig-ai.com OpenAI-compatible Images）；已实测 flare/sunburst generations。
+  # GPT Image 2 / 2.5：实例键是 AIG_openai（api.aig-ai.com OpenAI-compatible Images）；已实测 flare/sunburst generations。不要再复制旧键 async_gpt_image。
   # 无参考图 generations、有参考图 edits；不能并入上方 Gemini generateContent 生图实例，也不能与 FLUX.2 共用。
-  async_gpt_image:
+  AIG_openai:
     models:
       - gpt-image-2
       - gpt-image-2.5-flare
@@ -233,15 +231,15 @@ providers:
       api_key: "${ASYNC_GPT_IMAGE_API_KEY}"
       base_url: https://api.aig-ai.com/v1
   # FLUX.2 Klein 9B：当前 SeeTacloud 实例仅支持 image edit / 多图 i2i，调用方必须提供参考图；无参考图会在 ModelHub 侧拒绝。
-  flux2_klein_image:
+  uu847021-9507-702f766a.bjb2.seetacloud.com:
     models: [FLUX.2-klein-9B]
     openai:
       api_key: "${FLUX2_KLEIN_API_KEY}"
       base_url: https://uu847021-9507-702f766a.bjb2.seetacloud.com:8443/flux2/v1
   # 薇光点亮公网 FLUX：拆衣服 VWorld_wardrobe-1.0、虚拟换衣 VWorld_outfit_1.0、体模 VWorld_bodymodel_1.0。
   # 体模走 /v1/images/body_model，提示词和 1024x1536 由上游固定，与拆衣服/换衣不能共用请求字段。
-  # Basic Auth；不要写内网 10.200.* 或本机 127.0.0.1，也不要并入上方 SeeTacloud flux2_klein_image。
-  vworld_flux_image:
+  # Basic Auth；不要写内网 10.200.* 或本机 127.0.0.1，也不要并入上方 SeeTacloud FLUX.2 实例。
+  wgdl_image:
     models: [VWorld_wardrobe-1.0, VWorld_outfit_1.0, VWorld_bodymodel_1.0]
     vworld_image:
       base_url: https://vmind-image.model.wgdl.tech
@@ -249,7 +247,7 @@ providers:
       password: "${VWORLD_IMAGE_PASSWORD}"
   # Photoroom Remove Background：官方 POST /v1/segment；models 常量仅作路由，不发上游。
   # proxy_url 未配置时保持原有默认 HTTP transport 行为；CN 等需经出口代理访问官方 SDK 时再填（与 Gemini 同语义，属连接资源，变更须重启）。
-  photoroom_bg:
+  Photoroom:
     models: [photoroom-segment]
     photoroom:
       api_key: "${PHOTOROOM_API_KEY}"
@@ -257,7 +255,7 @@ providers:
       proxy_url: ""
   # 国内自建抠图。两个模型 ID 分别对应人物 /api/segment 与商品主体 /api/segment_subject。
   # username/password 可成对省略（匿名）；method 是上游算法名，不是模型 ID。
-  segment_person_bria:
+  wgdl_segment_person:
     models: [segment-person-bria, segment-subject-bria]
     segment_person:
       base_url: https://segment-person.model.wgdl.tech
@@ -265,102 +263,102 @@ providers:
       password: "${SEGMENT_PERSON_PASSWORD}"
       method: person-bria-rmbg
   # 自建人体检测。conf/iou 固定在供应商代码里。
-  human_yolo_cn:
+  human-yolo.model.wgdl.tech:
     models: [human-yolo]
     human_yolo:
       base_url: https://human-yolo.model.wgdl.tech
       username: "${HUMAN_YOLO_USERNAME}"
       password: "${HUMAN_YOLO_PASSWORD}"
   # 自建人体解析。username/password 成对省略则匿名。国内和新加坡继续用这个 ID。
-  human_parser_cn:
+  human-parser.model.wgdl.tech:
     models: [human-parser]
     human_parser:
       base_url: https://human-parser.model.wgdl.tech
       username: "${HUMAN_PARSER_USERNAME}"
       password: "${HUMAN_PARSER_PASSWORD}"
-  # 薇光点亮 G7 人体解析。无鉴权。只在美东路演把衣橱 human_parse_model 指到 human_parse。
-  human_parse_g7:
+  # G7 人体解析。无鉴权。只在美东路演把衣橱 human_parse_model 指到 human_parse。按目标 host 单独成渠道，不归入薇光点亮。
+  172.31.42.52:
     models: [human_parse]
     human_parser:
       base_url: http://172.31.42.52:6105
   # 阿里云 1:1 人脸比对。模型 ID 不下发上游。
-  facebody_compare_cn:
+  阿里云人脸人体_facebody_compare:
     models: [facebody-compare-face]
     facebody_compare:
       endpoint: facebody.cn-shanghai.aliyuncs.com
       access_key_id: "${FACEBODY_ACCESS_KEY_ID}"
       access_key_secret: "${FACEBODY_ACCESS_KEY_SECRET}"
   # CompareFaces。空钥走任务角色，region 不能是 cn-*。
-  rekognition_compare_us:
+  AWS_Rekognition_us-east-2_compare:
     models: [rekognition-compare-faces]
     rekognition_compare:
       region: us-east-2
       access_key_id: "${AWS_ACCESS_KEY_ID}"
       access_key_secret: "${AWS_SECRET_ACCESS_KEY}"
   # DetectLabels 人检。空钥走任务角色，region 不能是 cn-*。
-  rekognition_person:
+  AWS_Rekognition_us-east-1:
     models: [rekognition-detect-labels]
     rekognition_detect:
       region: us-east-1
       access_key_id: "${AWS_ACCESS_KEY_ID}"
       access_key_secret: "${AWS_SECRET_ACCESS_KEY}"
-  dashscope_embedding_cn:
+  阿里云百炼_dashscope_embedding:
     models: [qwen3-vl-embedding]
     dashscope_embedding:
       base_url: https://dashscope.aliyuncs.com/api/v1
       api_key: "${DASHSCOPE_API_KEY}"
-  cohere_embedding_us:
+  Cohere_embedding:
     models: [embed-v4.0]
     cohere_embedding:
       base_url: https://api.cohere.com
       api_key: "${COHERE_API_KEY}"
-  bedrock_embedding_us:
-    models: [us.cohere.embed-v4:0]
+  AWS_Bedrock_Runtime_us-east-1:
+    models: ['us.cohere.embed-v4:0']
     bedrock_embedding:
       region: us-east-1
-  dashscope_rerank_cn:
+  阿里云百炼_dashscope_rerank:
     models: [qwen3.7-text-rerank, qwen3-vl-rerank]
     dashscope_rerank:
       base_url: https://dashscope.aliyuncs.com/compatible-api/v1
       api_key: "${DASHSCOPE_API_KEY}"
-  bedrock_rerank_us:
-    models: [cohere.rerank-v3-5:0]
+  AWS_Bedrock_Agent_Runtime_us-east-1:
+    models: ['cohere.rerank-v3-5:0']
     bedrock_rerank:
       region: us-east-1
-  cohere_rerank_us:
+  Cohere_rerank:
     models: [rerank-v3.5]
     cohere_rerank:
       base_url: https://api.cohere.com
       api_key: "${COHERE_API_KEY}"
-  mixedbread_rerank:
+  Mixedbread:
     models: [mixedbread-ai/mxbai-rerank-v3.1-listwise]
     mixedbread_rerank:
       base_url: https://api.mixedbread.com
       api_key: "${MIXEDBREAD_API_KEY}"
-  facebody_detect_cn:
+  阿里云人脸人体_facebody_detect:
     models: [facebody-detect-face]
     facebody_detect:
       endpoint: facebody.cn-shanghai.aliyuncs.com
       access_key_id: "${FACEBODY_ACCESS_KEY_ID}"
       access_key_secret: "${FACEBODY_ACCESS_KEY_SECRET}"
-  facebody_library_cn:
+  阿里云人脸人体_facebody_library:
     models: [facebody-face-library]
     facebody_library:
       endpoint: facebody.cn-shanghai.aliyuncs.com
       access_key_id: "${FACEBODY_ACCESS_KEY_ID}"
       access_key_secret: "${FACEBODY_ACCESS_KEY_SECRET}"
       database: wgdl_dev
-  rekognition_faces_us:
+  AWS_Rekognition_us-east-2_faces:
     models: [rekognition-detect-faces]
     rekognition_faces:
       region: us-east-2
-  rekognition_library_us:
+  AWS_Rekognition_us-east-2_library:
     models: [rekognition-face-library]
     rekognition_library:
       region: us-east-2
       collection: wg-face-identity-us
   # 穿搭视频对外 ID 是 VWorld_outfit_video_1.0；LTX /vton 的 multipart model 仍写 ltx。
-  ltx_video:
+  wgdl_video:
     models: [VWorld_outfit_video_1.0]
     ltx:
       base_url: https://ltx.example
@@ -370,7 +368,7 @@ providers:
       seed: 42
       poll_interval: 2
   # DashScope Wan/HappyHorse/Kling 图生视频与 wan2.7-videoedit。
-  dashscope_video:
+  阿里云百炼_dashscope_video:
     models:
       - wan2.2-i2v-flash
       - wan2.2-i2v-plus
@@ -388,7 +386,7 @@ providers:
       base_url: https://dashscope.aliyuncs.com/api/v1
       poll_interval: 3
   # OminiLink vg-api 视频生成（含 UI 未展示的 Dreamina）。
-  ominilink_video:
+  AIG_VG:
     models:
       - dreamina-seedance-2-0-mini
       - dreamina-seedance-2-0
@@ -413,7 +411,7 @@ providers:
       base_url: https://vg-api.aig-ai.com/v1
       poll_interval: 3
   # Gemini Interactions 图生视频与编辑；auth_header 可指向 OminiLink 网关。
-  gemini_video:
+  Gemini_Developer_API_video:
     models: [gemini-omni-flash-preview]
     gemini_video:
       api_key: "${GEMINI_VIDEO_API_KEY}"
@@ -421,12 +419,11 @@ providers:
       proxy_url: ""
       auth_header: x-goog-api-key
       poll_interval: 5
-
 # 多 provider 声明同一真实模型时必须显式选定；切换渠道只改这里并重启，无自动 failover。
-# 切到 AWS workflow 备用渠道（底层直连 Google 官方 Gemini）时改为 aws_gemini。
+# 切到 AWS workflow 备用渠道（底层直连 Google 官方 Gemini）时改为 Gemini_Developer_API_aws_gemini。
 model_routes:
-  gemini-2.5-flash-image: aig_gemini_image
-  gemini-3.1-flash-image: aig_gemini_image
+  gemini-2.5-flash-image: AIG_gemini
+  gemini-3.1-flash-image: AIG_gemini
 
 # 账本媒体归档默认关闭；启用时填写 provider: oss 或 s3、bucket、region。
 # OSS 使用阿里云官方 SDK，还需 endpoint、access_key_id、access_key_secret。

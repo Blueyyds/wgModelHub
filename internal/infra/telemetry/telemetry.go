@@ -12,6 +12,7 @@ import (
 
 	"github.com/wgdl666/kangaroo/logs"
 	"github.com/wgdl666/wgModelHub/config"
+	"github.com/wgdl666/wgModelHub/internal/infra/channelmetric"
 	"github.com/wgdl666/wgModelHub/internal/infra/llmmetric"
 	"github.com/wgdl666/wgModelHub/internal/infra/metricserver"
 	"go.opentelemetry.io/otel"
@@ -31,6 +32,7 @@ type Runtime struct {
 	shared         *logs.Runtime
 	metricProvider *sdkmetric.MeterProvider
 	metricsHandler http.Handler
+	channels       *channelmetric.Publisher
 }
 
 // Setup 在 Nacos 配置加载后装配；日志/Trace 仍走 Logfire，业务 LLM 指标只进 Prometheus。
@@ -59,8 +61,8 @@ func Setup(ctx context.Context, cfg config.LogfireConfig) (*Runtime, error) {
 		return nil, err
 	}
 
-	// Prometheus exporter 已 WithoutTargetInfo：metrics resource 不会进入业务指标，
-	// 也无其它消费者；只保留独立 MeterProvider + Reader，避免无效 resource 构造。
+	// Prometheus exporter 已 WithoutTargetInfo：metrics resource 不会进入业务指标。
+	// LLM 指标走 MeterProvider；渠道信息直接挂在同一个 Registry，随 /metrics 抓取。
 	promReader, err := metricserver.NewReader()
 	if err != nil {
 		_ = shared.Shutdown(ctx)
@@ -74,12 +76,25 @@ func Setup(ctx context.Context, cfg config.LogfireConfig) (*Runtime, error) {
 		_ = shared.Shutdown(ctx)
 		return nil, fmt.Errorf("configure llm metrics: %w", err)
 	}
+	channels, err := channelmetric.New(promReader.Registerer())
+	if err != nil {
+		_ = metricProvider.Shutdown(ctx)
+		_ = shared.Shutdown(ctx)
+		return nil, err
+	}
 
 	return &Runtime{
 		shared:         shared,
 		metricProvider: metricProvider,
 		metricsHandler: promReader.Handler(),
+		channels:       channels,
 	}, nil
+}
+
+// PublishChannels 把当前实例的渠道写进 /metrics。配置热更新后应再调用一次。
+// Setup 成功时 channels 已由 channelmetric.New 装配，调用方拿到的就是这个对象。
+func (r *Runtime) PublishChannels(providers map[string]config.ProviderConfig) error {
+	return r.channels.Publish(providers)
 }
 
 // MetricsHandler 返回挂到内部 HTTP 端口 /metrics 的 Prometheus 抓取入口。

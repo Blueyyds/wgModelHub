@@ -80,7 +80,7 @@ type ProviderConfig struct {
 	Photoroom *PhotoroomProviderConfig `yaml:"photoroom"`
 	// SegmentPerson 承接国内自建人物/商品主体抠图；与 Photoroom 分实例，靠 models 列表切换。
 	SegmentPerson *SegmentPersonProviderConfig `yaml:"segment_person"`
-	// VWorldImage 承接薇光点亮公网 FLUX 拆衣服/虚拟换衣；与 SeeTacloud flux2_klein_image 分实例，禁止共用。
+	// VWorldImage 承接薇光点亮公网拆衣服/虚拟换衣/体模；实例键固定 wgdl_image，与 SeeTacloud FLUX.2 实例分绑，禁止共用。
 	VWorldImage *VWorldImageProviderConfig `yaml:"vworld_image"`
 	// HumanYOLO 承接自建人体检测。和 Rekognition、人体解析分实例。
 	HumanYOLO *HumanYOLOProviderConfig `yaml:"human_yolo"`
@@ -195,7 +195,7 @@ type ArkProviderConfig struct {
 	EndpointID string `yaml:"endpoint_id"`
 }
 
-// OpenAIProviderConfig 覆盖 OpenAI-compatible HTTP 端；文本实例与 GPT Image（async_gpt_image 上的 2 / 2.5）都走这里（按实例绑定 models）。
+// OpenAIProviderConfig 覆盖 OpenAI-compatible HTTP 端；文本实例与 GPT Image（AIG_openai 上的 2 / 2.5）都走这里（按实例绑定 models）。
 type OpenAIProviderConfig struct {
 	APIKey  string `yaml:"api_key"`
 	BaseURL string `yaml:"base_url"`

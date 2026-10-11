@@ -1,0 +1,513 @@
+{
+  "environment": "us-east-exhibition",
+  "metadata": {
+    "profile": "n1chtur",
+    "version": 40
+  },
+  "read_at": "2026-10-11T14:33:09.929303+00:00",
+  "providers": [
+    {
+      "instance": "gemini_api",
+      "models": [
+        "gemini-2.5-flash",
+        "gemini-3.5-flash",
+        "gemini-3.7-flash",
+        "gemini-3.5-flash-lite",
+        "gemini-3.8-flash"
+      ],
+      "protocols": [
+        {
+          "protocol": "gemini",
+          "hosts": {},
+          "proxy_configured": false
+        }
+      ],
+      "resource_group": 1
+    },
+    {
+      "instance": "dashscope_vl",
+      "models": [
+        "qwen3-vl-plus",
+        "qwen3.5-flash"
+      ],
+      "protocols": [
+        {
+          "protocol": "openai",
+          "hosts": {
+            "base_url": "dashscope.aliyuncs.com"
+          },
+          "proxy_configured": false
+        }
+      ],
+      "resource_group": 2
+    },
+    {
+      "instance": "aig_gemini_image",
+      "models": [
+        "gemini-3-pro-image",
+        "gemini-2.5-flash-image",
+        "gemini-3.1-flash-image"
+      ],
+      "protocols": [
+        {
+          "protocol": "gemini",
+          "hosts": {
+            "base_url": "api.aig-ai.com"
+          },
+          "proxy_configured": false
+        }
+      ],
+      "resource_group": 3
+    },
+    {
+      "instance": "gemini_api_image",
+      "models": [
+        "gemini-2.5-flash-image",
+        "gemini-3.1-flash-image"
+      ],
+      "protocols": [
+        {
+          "protocol": "gemini",
+          "hosts": {},
+          "proxy_configured": false
+        }
+      ],
+      "resource_group": 1
+    },
+    {
+      "instance": "薇光点亮_video",
+      "models": [
+        "VWorld_outfit_video_1.0"
+      ],
+      "protocols": [
+        {
+          "protocol": "ltx",
+          "hosts": {
+            "base_url": "g7e.tomirro.prod"
+          },
+          "proxy_configured": false
+        }
+      ],
+      "resource_group": 4
+    },
+    {
+      "instance": "aig_gpt_image",
+      "models": [
+        "gpt-image-2",
+        "gpt-image-2.5-flare",
+        "gpt-image-2.5-sunburst"
+      ],
+      "protocols": [
+        {
+          "protocol": "openai",
+          "hosts": {
+            "base_url": "api.aig-ai.com"
+          },
+          "proxy_configured": false
+        }
+      ],
+      "resource_group": 5
+    },
+    {
+      "instance": "dashscope_video",
+      "models": [
+        "wan2.2-i2v-flash",
+        "wan2.2-i2v-plus",
+        "wan2.2-i2v-turbo",
+        "wan2.6-i2v",
+        "wan2.6-i2v-flash",
+        "wan2.7-i2v",
+        "happyhorse-1.1-i2v",
+        "happyhorse-1.0-i2v",
+        "kling/kling-v3-video-generation",
+        "kling/kling-v3-omni-video-generation",
+        "wan2.7-videoedit"
+      ],
+      "protocols": [
+        {
+          "protocol": "dashscope_video",
+          "hosts": {
+            "base_url": "dashscope.aliyuncs.com"
+          },
+          "proxy_configured": false
+        }
+      ],
+      "resource_group": 6
+    },
+    {
+      "instance": "ominilink_video",
+      "models": [
+        "dreamina-seedance-2-0-mini",
+        "dreamina-seedance-2-0",
+        "dreamina-seedance-2-0-fast",
+        "kling-v2-master",
+        "kling-v2-1-master",
+        "kling-v2-5-turbo",
+        "kling-v2-6",
+        "kling-video-o1",
+        "kling-v3-omni",
+        "kling-v3",
+        "viduq3",
+        "viduq3-mix",
+        "viduq3-turbo",
+        "viduq3-pro-fast",
+        "viduq3-pro",
+        "veo-3.1-lite-generate-001",
+        "veo-3.1-fast-generate-001",
+        "veo-3.1-generate-001"
+      ],
+      "protocols": [
+        {
+          "protocol": "ominilink_video",
+          "hosts": {
+            "base_url": "vg-api.aig-ai.com"
+          },
+          "proxy_configured": false
+        }
+      ],
+      "resource_group": 7
+    },
+    {
+      "instance": "gemini_api_video",
+      "models": [
+        "gemini-omni-flash-preview"
+      ],
+      "protocols": [
+        {
+          "protocol": "gemini_video",
+          "hosts": {
+            "base_url": "generativelanguage.googleapis.com"
+          },
+          "proxy_configured": false
+        }
+      ],
+      "resource_group": 8
+    },
+    {
+      "instance": "photoroom_bg",
+      "models": [
+        "photoroom-segment"
+      ],
+      "protocols": [
+        {
+          "protocol": "photoroom",
+          "hosts": {
+            "base_url": "sdk.photoroom.com"
+          },
+          "proxy_configured": false
+        }
+      ],
+      "resource_group": 9
+    },
+    {
+      "instance": "薇光点亮",
+      "models": [
+        "segment-person-bria",
+        "segment-subject-bria"
+      ],
+      "protocols": [
+        {
+          "protocol": "segment_person",
+          "hosts": {
+            "base_url": "172.31.43.7"
+          },
+          "proxy_configured": false
+        }
+      ],
+      "resource_group": 10
+    },
+    {
+      "instance": "elevenlabs_tts",
+      "models": [
+        "eleven_flash_v2_5"
+      ],
+      "protocols": [
+        {
+          "protocol": "elevenlabs_tts",
+          "hosts": {
+            "base_url": "api.elevenlabs.io"
+          },
+          "proxy_configured": false
+        }
+      ],
+      "resource_group": 11
+    },
+    {
+      "instance": "human_parser_cn",
+      "models": [
+        "human-parser"
+      ],
+      "protocols": [
+        {
+          "protocol": "human_parser",
+          "hosts": {
+            "base_url": "human-parser.model.wgdl.tech"
+          },
+          "proxy_configured": false
+        }
+      ],
+      "resource_group": 12
+    },
+    {
+      "instance": "rekognition_person",
+      "models": [
+        "rekognition-detect-labels"
+      ],
+      "protocols": [
+        {
+          "protocol": "rekognition_detect",
+          "hosts": {},
+          "proxy_configured": false,
+          "region": "us-east-2"
+        }
+      ],
+      "resource_group": 13
+    },
+    {
+      "instance": "rekognition_compare_us",
+      "models": [
+        "rekognition-compare-faces"
+      ],
+      "protocols": [
+        {
+          "protocol": "rekognition_compare",
+          "hosts": {},
+          "proxy_configured": false,
+          "region": "us-east-2"
+        }
+      ],
+      "resource_group": 14
+    },
+    {
+      "instance": "cohere_embedding_us",
+      "models": [
+        "embed-v4.0"
+      ],
+      "protocols": [
+        {
+          "protocol": "cohere_embedding",
+          "hosts": {
+            "base_url": "api.cohere.com"
+          },
+          "proxy_configured": false
+        }
+      ],
+      "resource_group": 15
+    },
+    {
+      "instance": "dashscope_rerank_us",
+      "models": [
+        "qwen3.7-text-rerank"
+      ],
+      "protocols": [
+        {
+          "protocol": "dashscope_rerank",
+          "hosts": {
+            "base_url": "dashscope.aliyuncs.com"
+          },
+          "proxy_configured": false
+        }
+      ],
+      "resource_group": 16
+    },
+    {
+      "instance": "rekognition_faces_us",
+      "models": [
+        "rekognition-detect-faces"
+      ],
+      "protocols": [
+        {
+          "protocol": "rekognition_faces",
+          "hosts": {},
+          "proxy_configured": false,
+          "region": "us-east-2"
+        }
+      ],
+      "resource_group": 17
+    },
+    {
+      "instance": "rekognition_library_us",
+      "models": [
+        "rekognition-face-library"
+      ],
+      "protocols": [
+        {
+          "protocol": "rekognition_library",
+          "hosts": {},
+          "proxy_configured": false,
+          "region": "us-east-2"
+        }
+      ],
+      "resource_group": 18
+    },
+    {
+      "instance": "bedrock_rerank_us",
+      "models": [
+        "cohere.rerank-v3-5:0"
+      ],
+      "protocols": [
+        {
+          "protocol": "bedrock_rerank",
+          "hosts": {},
+          "proxy_configured": false,
+          "region": "us-east-1"
+        }
+      ],
+      "resource_group": 19
+    },
+    {
+      "instance": "cohere_rerank_us",
+      "models": [
+        "rerank-v3.5"
+      ],
+      "protocols": [
+        {
+          "protocol": "cohere_rerank",
+          "hosts": {
+            "base_url": "api.cohere.com"
+          },
+          "proxy_configured": false
+        }
+      ],
+      "resource_group": 20
+    },
+    {
+      "instance": "mixedbread_rerank",
+      "models": [
+        "mixedbread-ai/mxbai-rerank-v3.1-listwise"
+      ],
+      "protocols": [
+        {
+          "protocol": "mixedbread_rerank",
+          "hosts": {
+            "base_url": "api.mixedbread.com"
+          },
+          "proxy_configured": false
+        }
+      ],
+      "resource_group": 21
+    },
+    {
+      "instance": "薇光点亮_image",
+      "models": [
+        "VWorld_wardrobe-1.0",
+        "VWorld_outfit_1.0",
+        "VWorld_bodymodel_1.0"
+      ],
+      "protocols": [
+        {
+          "protocol": "vworld_image",
+          "hosts": {
+            "base_url": "g7e.tomirro.prod"
+          },
+          "proxy_configured": false
+        }
+      ],
+      "resource_group": 22
+    },
+    {
+      "instance": "human_parse_g7",
+      "models": [
+        "human_parse"
+      ],
+      "protocols": [
+        {
+          "protocol": "human_parser",
+          "hosts": {
+            "base_url": "172.31.42.52"
+          },
+          "proxy_configured": false
+        }
+      ],
+      "resource_group": 23
+    },
+    {
+      "instance": "assemblyai_asr",
+      "models": [
+        "universal-3-5-pro"
+      ],
+      "protocols": [
+        {
+          "protocol": "assemblyai_asr",
+          "hosts": {
+            "url": "streaming.assemblyai.com"
+          },
+          "proxy_configured": false
+        }
+      ],
+      "resource_group": 24
+    },
+    {
+      "instance": "deepgram_asr",
+      "models": [
+        "nova-3"
+      ],
+      "protocols": [
+        {
+          "protocol": "deepgram_asr",
+          "hosts": {
+            "url": "api.deepgram.com"
+          },
+          "proxy_configured": false
+        }
+      ],
+      "resource_group": 25
+    },
+    {
+      "instance": "volcengine_asr",
+      "models": [
+        "volcengine-bigmodel-streaming"
+      ],
+      "protocols": [
+        {
+          "protocol": "volcengine_asr",
+          "hosts": {
+            "url": "openspeech.bytedance.com"
+          },
+          "proxy_configured": false
+        }
+      ],
+      "resource_group": 26
+    },
+    {
+      "instance": "vertex_ai",
+      "models": [
+        "gemini-2.5-flash",
+        "gemini-nano-banana-2.1",
+        "gemini-3.5-flash-lite",
+        "gemini-3.5-flash",
+        "gemini-3.7-flash",
+        "gemini-3.8-flash",
+        "gemini-3-pro-image",
+        "gemini-2.5-flash-image",
+        "gemini-3.1-flash-image"
+      ],
+      "protocols": [
+        {
+          "protocol": "vertexai",
+          "hosts": {},
+          "proxy_configured": false
+        }
+      ],
+      "resource_group": 27
+    }
+  ],
+  "model_routes": {
+    "gemini-2.5-flash-image": "vertex_ai",
+    "gemini-3.1-flash-image": "vertex_ai",
+    "eleven_flash_v2_5": "elevenlabs_tts",
+    "gemini-2.5-flash": "vertex_ai",
+    "gemini-3.5-flash-lite": {
+      "default": "vertex_ai",
+      "race": [
+        "gemini_api",
+        "vertex_ai"
+      ]
+    },
+    "gemini-3.5-flash": "vertex_ai",
+    "gemini-3.7-flash": "vertex_ai",
+    "gemini-3.8-flash": "vertex_ai",
+    "gemini-3-pro-image": "vertex_ai",
+    "gemini-nano-banana-2.1": "vertex_ai"
+  }
+}

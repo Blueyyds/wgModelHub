@@ -34,7 +34,7 @@ var horizontalRatios = map[string]struct{}{
 
 // GenerateImage 按 Input 是否含参考图分流 OpenAI Images API：
 // 无参考图走 /v1/images/generations（JSON），有参考图走 /v1/images/edits（multipart）。
-// GPT Image 2 / 2.5 经现网已实测的 AIG OpenAI-compatible Images（async_gpt_image）：不能复用 chat/completions，也不能挂到 Gemini generateContent 实例。
+// GPT Image 2 / 2.5 经 AIG OpenAI-compatible Images（实例键 AIG_openai，地址 https://api.aig-ai.com/v1）：不能复用 chat/completions，也不能挂到 Gemini generateContent 实例。
 // FLUX.2-klein-9B 当前供应商仅开放 i2i edits，无参考图必须在发 HTTP 前拒绝，且 edits 须显式 response_format=b64_json。
 func (p *Provider) GenerateImage(ctx context.Context, model string, request *modelhubv2.GenerateRequest) (*modelhubv2.GenerateEvent, error) {
 	prompt := strings.TrimSpace(provider.JoinedText(request.GetInput()))

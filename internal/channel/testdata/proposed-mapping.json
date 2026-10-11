@@ -1,0 +1,1683 @@
+[
+  {
+    "environment": "cn-dev",
+    "old_instance": "gemini_api",
+    "channel": "Gemini Developer API",
+    "host": "generativelanguage.googleapis.com",
+    "host_source": "SDK 默认",
+    "protocol": "gemini",
+    "proposed_instance": "Gemini_Developer_API",
+    "models": [
+      "gemini-2.5-flash",
+      "gemini-3.5-flash",
+      "gemini-3.7-flash",
+      "gemini-3.8-flash",
+      "gemini-3.5-flash-lite"
+    ],
+    "resource_group": 1
+  },
+  {
+    "environment": "cn-dev",
+    "old_instance": "dashscope_chat",
+    "channel": "阿里云百炼",
+    "host": "dashscope.aliyuncs.com",
+    "host_source": "显式地址",
+    "protocol": "openai",
+    "proposed_instance": "阿里云百炼_openai_chat",
+    "models": [
+      "qwen-flash",
+      "qwen3.7-flash",
+      "qwen3.8-flash"
+    ],
+    "resource_group": 2
+  },
+  {
+    "environment": "cn-dev",
+    "old_instance": "dashscope_vl",
+    "channel": "阿里云百炼",
+    "host": "dashscope.aliyuncs.com",
+    "host_source": "显式地址",
+    "protocol": "openai",
+    "proposed_instance": "阿里云百炼_openai_vl",
+    "models": [
+      "qwen3-vl-plus",
+      "qwen3.5-flash"
+    ],
+    "resource_group": 2
+  },
+  {
+    "environment": "cn-dev",
+    "old_instance": "aig_gemini_image",
+    "channel": "AIG",
+    "host": "api.aig-ai.com",
+    "host_source": "显式地址",
+    "protocol": "gemini",
+    "proposed_instance": "AIG_gemini",
+    "models": [
+      "gemini-3-pro-image",
+      "gemini-2.5-flash-image",
+      "gemini-3.1-flash-image"
+    ],
+    "resource_group": 3
+  },
+  {
+    "environment": "cn-dev",
+    "old_instance": "gemini_api_image",
+    "channel": "Gemini Developer API",
+    "host": "generativelanguage.googleapis.com",
+    "host_source": "SDK 默认",
+    "protocol": "gemini",
+    "proposed_instance": "Gemini_Developer_API_image",
+    "models": [
+      "gemini-2.5-flash-image",
+      "gemini-3.1-flash-image"
+    ],
+    "resource_group": 1
+  },
+  {
+    "environment": "cn-dev",
+    "old_instance": "薇光点亮_video",
+    "channel": "薇光点亮",
+    "host": "u847021-acf7-512372b5.bjb2.seetacloud.com",
+    "host_source": "显式地址",
+    "protocol": "ltx",
+    "proposed_instance": "薇光点亮_video",
+    "models": [
+      "VWorld_outfit_video_1.0"
+    ],
+    "resource_group": 4
+  },
+  {
+    "environment": "cn-dev",
+    "old_instance": "aig_gpt_image",
+    "channel": "AIG",
+    "host": "api.aig-ai.com",
+    "host_source": "显式地址",
+    "protocol": "openai",
+    "proposed_instance": "AIG_openai",
+    "models": [
+      "gpt-image-2",
+      "gpt-image-2.5-flare",
+      "gpt-image-2.5-sunburst"
+    ],
+    "resource_group": 5
+  },
+  {
+    "environment": "cn-dev",
+    "old_instance": "dashscope_video",
+    "channel": "阿里云百炼",
+    "host": "dashscope.aliyuncs.com",
+    "host_source": "显式地址",
+    "protocol": "dashscope_video",
+    "proposed_instance": "阿里云百炼_dashscope_video",
+    "models": [
+      "wan2.2-i2v-flash",
+      "wan2.2-i2v-plus",
+      "wan2.2-i2v-turbo",
+      "wan2.6-i2v",
+      "wan2.6-i2v-flash",
+      "wan2.7-i2v",
+      "happyhorse-1.1-i2v",
+      "happyhorse-1.0-i2v",
+      "kling/kling-v3-video-generation",
+      "kling/kling-v3-omni-video-generation",
+      "wan2.7-videoedit"
+    ],
+    "resource_group": 6
+  },
+  {
+    "environment": "cn-dev",
+    "old_instance": "ominilink_video",
+    "channel": "AIG VG",
+    "host": "vg-api.aig-ai.com",
+    "host_source": "显式地址",
+    "protocol": "ominilink_video",
+    "proposed_instance": "AIG_VG",
+    "models": [
+      "dreamina-seedance-2-0-mini",
+      "dreamina-seedance-2-0-fast",
+      "kling-v2-master",
+      "kling-v2-1-master",
+      "kling-v2-5-turbo",
+      "kling-v2-6",
+      "kling-video-o1",
+      "kling-v3-omni",
+      "kling-v3",
+      "viduq3",
+      "viduq3-mix",
+      "viduq3-turbo",
+      "viduq3-pro-fast",
+      "viduq3-pro",
+      "veo-3.1-lite-generate-001",
+      "veo-3.1-fast-generate-001",
+      "veo-3.1-generate-001"
+    ],
+    "resource_group": 7
+  },
+  {
+    "environment": "cn-dev",
+    "old_instance": "gemini_api_video",
+    "channel": "Gemini Developer API",
+    "host": "generativelanguage.googleapis.com",
+    "host_source": "显式地址",
+    "protocol": "gemini_video",
+    "proposed_instance": "Gemini_Developer_API_video",
+    "models": [
+      "gemini-omni-flash-preview"
+    ],
+    "resource_group": 8
+  },
+  {
+    "environment": "cn-dev",
+    "old_instance": "ark_video",
+    "channel": "火山方舟",
+    "host": "ark.cn-beijing.volces.com",
+    "host_source": "显式地址",
+    "protocol": "ark_video",
+    "proposed_instance": "火山方舟_ark_video",
+    "models": [
+      "doubao-seedance-2-0-260128"
+    ],
+    "resource_group": 9
+  },
+  {
+    "environment": "cn-dev",
+    "old_instance": "minimax_tts",
+    "channel": "MiniMax",
+    "host": "api.minimaxi.com",
+    "host_source": "显式地址",
+    "protocol": "minimax_tts",
+    "proposed_instance": "MiniMax",
+    "models": [
+      "speech-2.8-turbo"
+    ],
+    "resource_group": 10
+  },
+  {
+    "environment": "cn-dev",
+    "old_instance": "ark_doubao_mini",
+    "channel": "火山方舟",
+    "host": "ark.cn-beijing.volces.com",
+    "host_source": "显式地址",
+    "protocol": "ark",
+    "proposed_instance": "火山方舟_ark_doubao_mini",
+    "models": [
+      "doubao-seed-2.0-mini"
+    ],
+    "resource_group": 11
+  },
+  {
+    "environment": "cn-dev",
+    "old_instance": "ark_doubao_lite",
+    "channel": "火山方舟",
+    "host": "ark.cn-beijing.volces.com",
+    "host_source": "显式地址",
+    "protocol": "ark",
+    "proposed_instance": "火山方舟_ark_doubao_lite",
+    "models": [
+      "doubao-seed-2.0-lite"
+    ],
+    "resource_group": 12
+  },
+  {
+    "environment": "cn-dev",
+    "old_instance": "ark_doubao_21_pro",
+    "channel": "火山方舟",
+    "host": "ark.cn-beijing.volces.com",
+    "host_source": "显式地址",
+    "protocol": "ark",
+    "proposed_instance": "火山方舟_ark_doubao_21_pro",
+    "models": [
+      "doubao-seed-2.1-pro"
+    ],
+    "resource_group": 13
+  },
+  {
+    "environment": "cn-dev",
+    "old_instance": "ark_deepseek_v4_flash",
+    "channel": "火山方舟",
+    "host": "ark.cn-beijing.volces.com",
+    "host_source": "显式地址",
+    "protocol": "ark",
+    "proposed_instance": "火山方舟_ark_deepseek_v4_flash",
+    "models": [
+      "deepseek-v4-flash"
+    ],
+    "resource_group": 14
+  },
+  {
+    "environment": "cn-dev",
+    "old_instance": "ark_deepseek_v41_flash",
+    "channel": "火山方舟",
+    "host": "ark.cn-beijing.volces.com",
+    "host_source": "显式地址",
+    "protocol": "ark",
+    "proposed_instance": "火山方舟_ark_deepseek_v41_flash",
+    "models": [
+      "deepseek-v4.1-flash"
+    ],
+    "resource_group": 15
+  },
+  {
+    "environment": "cn-dev",
+    "old_instance": "zhipu_glm",
+    "channel": "智谱",
+    "host": "open.bigmodel.cn",
+    "host_source": "显式地址",
+    "protocol": "openai",
+    "proposed_instance": "智谱",
+    "models": [
+      "glm-5.3-flash"
+    ],
+    "resource_group": 16
+  },
+  {
+    "environment": "cn-dev",
+    "old_instance": "薇光点亮",
+    "channel": "薇光点亮",
+    "host": "segment-person.model.wgdl.tech",
+    "host_source": "显式地址",
+    "protocol": "segment_person",
+    "proposed_instance": "薇光点亮",
+    "models": [
+      "segment-person-bria",
+      "segment-subject-bria"
+    ],
+    "resource_group": 17
+  },
+  {
+    "environment": "cn-dev",
+    "old_instance": "human_yolo_cn",
+    "channel": "human-yolo.model.wgdl.tech",
+    "host": "human-yolo.model.wgdl.tech",
+    "host_source": "显式地址",
+    "protocol": "human_yolo",
+    "proposed_instance": "human-yolo.model.wgdl.tech",
+    "models": [
+      "human-yolo"
+    ],
+    "resource_group": 18
+  },
+  {
+    "environment": "cn-dev",
+    "old_instance": "human_parser_cn",
+    "channel": "human-parser.model.wgdl.tech",
+    "host": "human-parser.model.wgdl.tech",
+    "host_source": "显式地址",
+    "protocol": "human_parser",
+    "proposed_instance": "human-parser.model.wgdl.tech",
+    "models": [
+      "human-parser"
+    ],
+    "resource_group": 19
+  },
+  {
+    "environment": "cn-dev",
+    "old_instance": "facebody_compare_cn",
+    "channel": "阿里云人脸人体",
+    "host": "facebody.cn-shanghai.aliyuncs.com",
+    "host_source": "显式地址",
+    "protocol": "facebody_compare",
+    "proposed_instance": "阿里云人脸人体_facebody_compare",
+    "models": [
+      "facebody-compare-face"
+    ],
+    "resource_group": 20
+  },
+  {
+    "environment": "cn-dev",
+    "old_instance": "dashscope_embedding_cn",
+    "channel": "阿里云百炼",
+    "host": "dashscope.aliyuncs.com",
+    "host_source": "显式地址",
+    "protocol": "dashscope_embedding",
+    "proposed_instance": "阿里云百炼_dashscope_embedding",
+    "models": [
+      "qwen3-vl-embedding"
+    ],
+    "resource_group": 21
+  },
+  {
+    "environment": "cn-dev",
+    "old_instance": "dashscope_rerank_cn",
+    "channel": "阿里云百炼",
+    "host": "dashscope.aliyuncs.com",
+    "host_source": "显式地址",
+    "protocol": "dashscope_rerank",
+    "proposed_instance": "阿里云百炼_dashscope_rerank",
+    "models": [
+      "qwen3.7-text-rerank"
+    ],
+    "resource_group": 22
+  },
+  {
+    "environment": "cn-dev",
+    "old_instance": "facebody_detect_cn",
+    "channel": "阿里云人脸人体",
+    "host": "facebody.cn-shanghai.aliyuncs.com",
+    "host_source": "显式地址",
+    "protocol": "facebody_detect",
+    "proposed_instance": "阿里云人脸人体_facebody_detect",
+    "models": [
+      "facebody-detect-face"
+    ],
+    "resource_group": 23
+  },
+  {
+    "environment": "cn-dev",
+    "old_instance": "facebody_library_cn",
+    "channel": "阿里云人脸人体",
+    "host": "facebody.cn-shanghai.aliyuncs.com",
+    "host_source": "显式地址",
+    "protocol": "facebody_library",
+    "proposed_instance": "阿里云人脸人体_facebody_library",
+    "models": [
+      "facebody-face-library"
+    ],
+    "resource_group": 24
+  },
+  {
+    "environment": "cn-dev",
+    "old_instance": "photoroom_bg",
+    "channel": "Photoroom",
+    "host": "sdk.photoroom.com",
+    "host_source": "显式地址",
+    "protocol": "photoroom",
+    "proposed_instance": "Photoroom",
+    "models": [
+      "photoroom-segment"
+    ],
+    "resource_group": 25
+  },
+  {
+    "environment": "cn-dev",
+    "old_instance": "薇光点亮_image",
+    "channel": "薇光点亮",
+    "host": "uu847021-b068-dc1cca42.westd.seetacloud.com",
+    "host_source": "显式地址",
+    "protocol": "vworld_image",
+    "proposed_instance": "薇光点亮_image",
+    "models": [
+      "VWorld_wardrobe-1.0",
+      "VWorld_outfit_1.0"
+    ],
+    "resource_group": 26
+  },
+  {
+    "environment": "cn-dev",
+    "old_instance": "volcengine_asr",
+    "channel": "火山语音",
+    "host": "openspeech.bytedance.com",
+    "host_source": "显式地址",
+    "protocol": "volcengine_asr",
+    "proposed_instance": "火山语音",
+    "models": [
+      "volcengine-bigmodel-streaming"
+    ],
+    "resource_group": 27
+  },
+  {
+    "environment": "cn-dev",
+    "old_instance": "aliyun_asr",
+    "channel": "阿里云语音",
+    "host": "nls-gateway-cn-shenzhen.aliyuncs.com",
+    "host_source": "显式地址",
+    "protocol": "aliyun_asr",
+    "proposed_instance": "阿里云语音",
+    "models": [
+      "aliyun-nls"
+    ],
+    "resource_group": 28
+  },
+  {
+    "environment": "cn-dev",
+    "old_instance": "fun_asr",
+    "channel": "阿里云百炼",
+    "host": "dashscope.aliyuncs.com",
+    "host_source": "客户端默认",
+    "protocol": "fun_asr",
+    "proposed_instance": "阿里云百炼_fun_asr",
+    "models": [
+      "fun-asr-realtime"
+    ],
+    "resource_group": 29
+  },
+  {
+    "environment": "cn-dev",
+    "old_instance": "qwen_asr",
+    "channel": "阿里云百炼",
+    "host": "dashscope.aliyuncs.com",
+    "host_source": "客户端默认",
+    "protocol": "qwen_asr",
+    "proposed_instance": "阿里云百炼_qwen_asr",
+    "models": [
+      "qwen3-asr-flash-realtime-2026-02-10"
+    ],
+    "resource_group": 30
+  },
+  {
+    "environment": "cn-dev",
+    "old_instance": "tencent_asr",
+    "channel": "腾讯云语音",
+    "host": "asr.cloud.tencent.com",
+    "host_source": "SDK 默认",
+    "protocol": "tencent_asr",
+    "proposed_instance": "腾讯云语音",
+    "models": [
+      "16k_zh"
+    ],
+    "resource_group": 31
+  },
+  {
+    "environment": "cn-dev",
+    "old_instance": "vertex_ai",
+    "channel": "Vertex AI",
+    "host": "aiplatform.googleapis.com",
+    "host_source": "SDK 默认",
+    "protocol": "vertexai",
+    "proposed_instance": "Vertex_AI",
+    "models": [
+      "gemini-2.5-flash",
+      "gemini-nano-banana-2.1",
+      "gemini-3.7-flash",
+      "gemini-3.5-flash",
+      "gemini-3.8-flash",
+      "gemini-3.5-flash-lite",
+      "gemini-3-pro-image",
+      "gemini-2.5-flash-image",
+      "gemini-3.1-flash-image"
+    ],
+    "resource_group": 32
+  },
+  {
+    "environment": "aws-sg-dev",
+    "old_instance": "gemini_api",
+    "channel": "Gemini Developer API",
+    "host": "generativelanguage.googleapis.com",
+    "host_source": "SDK 默认",
+    "protocol": "gemini",
+    "proposed_instance": "Gemini_Developer_API",
+    "models": [
+      "gemini-2.5-flash",
+      "gemini-3.5-flash",
+      "gemini-3.7-flash",
+      "gemini-3.5-flash-lite",
+      "gemini-3.8-flash",
+      "gemini-3.1-pro-preview",
+      "gemini-3-flash-preview"
+    ],
+    "resource_group": 1
+  },
+  {
+    "environment": "aws-sg-dev",
+    "old_instance": "dashscope_chat",
+    "channel": "阿里云百炼",
+    "host": "dashscope.aliyuncs.com",
+    "host_source": "显式地址",
+    "protocol": "openai",
+    "proposed_instance": "阿里云百炼_openai_chat",
+    "models": [
+      "qwen-flash",
+      "qwen3.7-flash",
+      "qwen3.7-plus",
+      "qwen3.8-max",
+      "qwen3.8-flash"
+    ],
+    "resource_group": 2
+  },
+  {
+    "environment": "aws-sg-dev",
+    "old_instance": "dashscope_vl",
+    "channel": "阿里云百炼",
+    "host": "dashscope.aliyuncs.com",
+    "host_source": "显式地址",
+    "protocol": "openai",
+    "proposed_instance": "阿里云百炼_openai_vl",
+    "models": [
+      "qwen3-vl-plus",
+      "qwen3.5-flash"
+    ],
+    "resource_group": 2
+  },
+  {
+    "environment": "aws-sg-dev",
+    "old_instance": "aig_gemini_image",
+    "channel": "AIG",
+    "host": "api.aig-ai.com",
+    "host_source": "显式地址",
+    "protocol": "gemini",
+    "proposed_instance": "AIG_gemini",
+    "models": [
+      "gemini-3-pro-image",
+      "gemini-2.5-flash-image",
+      "gemini-3.1-flash-image"
+    ],
+    "resource_group": 3
+  },
+  {
+    "environment": "aws-sg-dev",
+    "old_instance": "gemini_api_image",
+    "channel": "Gemini Developer API",
+    "host": "generativelanguage.googleapis.com",
+    "host_source": "SDK 默认",
+    "protocol": "gemini",
+    "proposed_instance": "Gemini_Developer_API_image",
+    "models": [
+      "gemini-2.5-flash-image",
+      "gemini-3.1-flash-image"
+    ],
+    "resource_group": 1
+  },
+  {
+    "environment": "aws-sg-dev",
+    "old_instance": "aig_gpt_image",
+    "channel": "AIG",
+    "host": "api.aig-ai.com",
+    "host_source": "显式地址",
+    "protocol": "openai",
+    "proposed_instance": "AIG_openai",
+    "models": [
+      "gpt-image-2",
+      "gpt-image-2.5-flare",
+      "gpt-image-2.5-sunburst"
+    ],
+    "resource_group": 4
+  },
+  {
+    "environment": "aws-sg-dev",
+    "old_instance": "dashscope_video",
+    "channel": "阿里云百炼",
+    "host": "dashscope.aliyuncs.com",
+    "host_source": "显式地址",
+    "protocol": "dashscope_video",
+    "proposed_instance": "阿里云百炼_dashscope_video",
+    "models": [
+      "wan2.2-i2v-flash",
+      "wan2.2-i2v-plus",
+      "wan2.2-i2v-turbo",
+      "wan2.6-i2v",
+      "wan2.6-i2v-flash",
+      "wan2.7-i2v",
+      "happyhorse-1.1-i2v",
+      "happyhorse-1.0-i2v",
+      "kling/kling-v3-video-generation",
+      "kling/kling-v3-omni-video-generation",
+      "wan2.7-videoedit"
+    ],
+    "resource_group": 5
+  },
+  {
+    "environment": "aws-sg-dev",
+    "old_instance": "ominilink_video",
+    "channel": "AIG VG",
+    "host": "vg-api.aig-ai.com",
+    "host_source": "显式地址",
+    "protocol": "ominilink_video",
+    "proposed_instance": "AIG_VG",
+    "models": [
+      "dreamina-seedance-2-0-mini",
+      "dreamina-seedance-2-0",
+      "dreamina-seedance-2-0-fast",
+      "kling-v2-master",
+      "kling-v2-1-master",
+      "kling-v2-5-turbo",
+      "kling-v2-6",
+      "kling-video-o1",
+      "kling-v3-omni",
+      "kling-v3",
+      "viduq3",
+      "viduq3-mix",
+      "viduq3-turbo",
+      "viduq3-pro-fast",
+      "viduq3-pro",
+      "veo-3.1-lite-generate-001",
+      "veo-3.1-fast-generate-001",
+      "veo-3.1-generate-001"
+    ],
+    "resource_group": 6
+  },
+  {
+    "environment": "aws-sg-dev",
+    "old_instance": "gemini_api_video",
+    "channel": "Gemini Developer API",
+    "host": "generativelanguage.googleapis.com",
+    "host_source": "显式地址",
+    "protocol": "gemini_video",
+    "proposed_instance": "Gemini_Developer_API_video",
+    "models": [
+      "gemini-omni-flash-preview"
+    ],
+    "resource_group": 7
+  },
+  {
+    "environment": "aws-sg-dev",
+    "old_instance": "photoroom_bg",
+    "channel": "Photoroom",
+    "host": "sdk.photoroom.com",
+    "host_source": "显式地址",
+    "protocol": "photoroom",
+    "proposed_instance": "Photoroom",
+    "models": [
+      "photoroom-segment"
+    ],
+    "resource_group": 8
+  },
+  {
+    "environment": "aws-sg-dev",
+    "old_instance": "human_parser_cn",
+    "channel": "human-parser.model.wgdl.tech",
+    "host": "human-parser.model.wgdl.tech",
+    "host_source": "显式地址",
+    "protocol": "human_parser",
+    "proposed_instance": "human-parser.model.wgdl.tech",
+    "models": [
+      "human-parser"
+    ],
+    "resource_group": 9
+  },
+  {
+    "environment": "aws-sg-dev",
+    "old_instance": "human_yolo_cn",
+    "channel": "human-yolo.model.wgdl.tech",
+    "host": "human-yolo.model.wgdl.tech",
+    "host_source": "显式地址",
+    "protocol": "human_yolo",
+    "proposed_instance": "human-yolo.model.wgdl.tech",
+    "models": [
+      "human-yolo"
+    ],
+    "resource_group": 10
+  },
+  {
+    "environment": "aws-sg-dev",
+    "old_instance": "rekognition_compare_sg",
+    "channel": "AWS Rekognition_ap-southeast-1",
+    "host": "rekognition.ap-southeast-1.amazonaws.com",
+    "host_source": "SDK 区域默认",
+    "protocol": "rekognition_compare",
+    "proposed_instance": "AWS_Rekognition_ap-southeast-1_rekognition_compare",
+    "models": [
+      "rekognition-compare-faces"
+    ],
+    "resource_group": 11
+  },
+  {
+    "environment": "aws-sg-dev",
+    "old_instance": "dashscope_embedding_sg",
+    "channel": "阿里云百炼",
+    "host": "dashscope.aliyuncs.com",
+    "host_source": "显式地址",
+    "protocol": "dashscope_embedding",
+    "proposed_instance": "阿里云百炼_dashscope_embedding",
+    "models": [
+      "qwen3-vl-embedding"
+    ],
+    "resource_group": 12
+  },
+  {
+    "environment": "aws-sg-dev",
+    "old_instance": "dashscope_rerank_sg",
+    "channel": "阿里云百炼",
+    "host": "dashscope.aliyuncs.com",
+    "host_source": "显式地址",
+    "protocol": "dashscope_rerank",
+    "proposed_instance": "阿里云百炼_dashscope_rerank",
+    "models": [
+      "qwen3.7-text-rerank"
+    ],
+    "resource_group": 13
+  },
+  {
+    "environment": "aws-sg-dev",
+    "old_instance": "rekognition_faces_sg",
+    "channel": "AWS Rekognition_ap-southeast-1",
+    "host": "rekognition.ap-southeast-1.amazonaws.com",
+    "host_source": "SDK 区域默认",
+    "protocol": "rekognition_faces",
+    "proposed_instance": "AWS_Rekognition_ap-southeast-1_rekognition_faces",
+    "models": [
+      "rekognition-detect-faces"
+    ],
+    "resource_group": 14
+  },
+  {
+    "environment": "aws-sg-dev",
+    "old_instance": "rekognition_library_sg",
+    "channel": "AWS Rekognition_ap-southeast-1",
+    "host": "rekognition.ap-southeast-1.amazonaws.com",
+    "host_source": "SDK 区域默认",
+    "protocol": "rekognition_library",
+    "proposed_instance": "AWS_Rekognition_ap-southeast-1_rekognition_library",
+    "models": [
+      "rekognition-face-library"
+    ],
+    "resource_group": 15
+  },
+  {
+    "environment": "aws-sg-dev",
+    "old_instance": "elevenlabs_tts",
+    "channel": "ElevenLabs",
+    "host": "api.elevenlabs.io",
+    "host_source": "显式地址",
+    "protocol": "elevenlabs_tts",
+    "proposed_instance": "ElevenLabs",
+    "models": [
+      "eleven_flash_v2_5"
+    ],
+    "resource_group": 16
+  },
+  {
+    "environment": "aws-sg-dev",
+    "old_instance": "rekognition_person",
+    "channel": "AWS Rekognition_ap-southeast-1",
+    "host": "rekognition.ap-southeast-1.amazonaws.com",
+    "host_source": "SDK 区域默认",
+    "protocol": "rekognition_detect",
+    "proposed_instance": "AWS_Rekognition_ap-southeast-1_rekognition_detect",
+    "models": [
+      "rekognition-detect-labels"
+    ],
+    "resource_group": 17
+  },
+  {
+    "environment": "aws-sg-dev",
+    "old_instance": "cohere_embedding_sg",
+    "channel": "Cohere",
+    "host": "api.cohere.com",
+    "host_source": "显式地址",
+    "protocol": "cohere_embedding",
+    "proposed_instance": "Cohere_cohere_embedding",
+    "models": [
+      "embed-v4.0"
+    ],
+    "resource_group": 18
+  },
+  {
+    "environment": "aws-sg-dev",
+    "old_instance": "bedrock_rerank_sg",
+    "channel": "AWS Bedrock Agent Runtime_us-east-1",
+    "host": "bedrock-agent-runtime.us-east-1.amazonaws.com",
+    "host_source": "SDK 区域默认",
+    "protocol": "bedrock_rerank",
+    "proposed_instance": "AWS_Bedrock_Agent_Runtime_us-east-1_bedrock_rerank",
+    "models": [
+      "cohere.rerank-v3-5:0"
+    ],
+    "resource_group": 19
+  },
+  {
+    "environment": "aws-sg-dev",
+    "old_instance": "cohere_rerank_sg",
+    "channel": "Cohere",
+    "host": "api.cohere.com",
+    "host_source": "显式地址",
+    "protocol": "cohere_rerank",
+    "proposed_instance": "Cohere_cohere_rerank",
+    "models": [
+      "rerank-v3.5"
+    ],
+    "resource_group": 20
+  },
+  {
+    "environment": "aws-sg-dev",
+    "old_instance": "muse_fashion_embedding",
+    "channel": "fashion-embedding.model.wgdl.tech",
+    "host": "fashion-embedding.model.wgdl.tech",
+    "host_source": "显式地址",
+    "protocol": "fashion",
+    "proposed_instance": "fashion-embedding.model.wgdl.tech",
+    "models": [
+      "fashion-embedding"
+    ],
+    "resource_group": 21
+  },
+  {
+    "environment": "aws-sg-dev",
+    "old_instance": "muse_fashion_reranker",
+    "channel": "fashion-reranker.model.wgdl.tech",
+    "host": "fashion-reranker.model.wgdl.tech",
+    "host_source": "显式地址",
+    "protocol": "fashion",
+    "proposed_instance": "fashion-reranker.model.wgdl.tech",
+    "models": [
+      "fashion-reranker"
+    ],
+    "resource_group": 22
+  },
+  {
+    "environment": "aws-sg-dev",
+    "old_instance": "aliyun_image_seg",
+    "channel": "阿里云图像分割",
+    "host": "imageseg.cn-shanghai.aliyuncs.com",
+    "host_source": "显式地址",
+    "protocol": "image_seg",
+    "proposed_instance": "阿里云图像分割",
+    "models": [
+      "aliyun-segment-body",
+      "aliyun-segment-hd-body",
+      "aliyun-segment-commodity",
+      "aliyun-segment-common"
+    ],
+    "resource_group": 23
+  },
+  {
+    "environment": "aws-sg-dev",
+    "old_instance": "ominilink_gpt",
+    "channel": "Ominilink",
+    "host": "api.ominilink.ai",
+    "host_source": "显式地址",
+    "protocol": "openai",
+    "proposed_instance": "Ominilink",
+    "models": [
+      "gpt-5.4"
+    ],
+    "resource_group": 24
+  },
+  {
+    "environment": "aws-sg-dev",
+    "old_instance": "human_parse_g7",
+    "channel": "18.191.134.0",
+    "host": "18.191.134.0",
+    "host_source": "显式地址",
+    "protocol": "human_parser",
+    "proposed_instance": "18.191.134.0",
+    "models": [
+      "human_parse"
+    ],
+    "resource_group": 25
+  },
+  {
+    "environment": "aws-sg-dev",
+    "old_instance": "vertex_ai",
+    "channel": "Vertex AI",
+    "host": "aiplatform.googleapis.com",
+    "host_source": "SDK 默认",
+    "protocol": "vertexai",
+    "proposed_instance": "Vertex_AI",
+    "models": [
+      "gemini-2.5-flash",
+      "gemini-3.5-flash",
+      "gemini-3.7-flash",
+      "gemini-3.5-flash-lite",
+      "gemini-3.8-flash",
+      "gemini-3.1-pro-preview",
+      "gemini-3-flash-preview",
+      "gemini-3-pro-image",
+      "gemini-2.5-flash-image",
+      "gemini-3.1-flash-image"
+    ],
+    "resource_group": 26
+  },
+  {
+    "environment": "aws-sg-dev",
+    "old_instance": "薇光点亮_video",
+    "channel": "薇光点亮",
+    "host": "u847021-9507-702f766a.bjb2.seetacloud.com",
+    "host_source": "显式地址",
+    "protocol": "ltx",
+    "proposed_instance": "薇光点亮_video",
+    "models": [
+      "ltx"
+    ],
+    "resource_group": 27
+  },
+  {
+    "environment": "aws-ohio-test",
+    "old_instance": "gemini_api",
+    "channel": "Gemini Developer API",
+    "host": "generativelanguage.googleapis.com",
+    "host_source": "SDK 默认",
+    "protocol": "gemini",
+    "proposed_instance": "Gemini_Developer_API",
+    "models": [
+      "gemini-2.5-flash",
+      "gemini-3.5-flash",
+      "gemini-3.7-flash",
+      "gemini-3.5-flash-lite",
+      "gemini-3.8-flash",
+      "gemini-3.1-pro-preview"
+    ],
+    "resource_group": 1
+  },
+  {
+    "environment": "aws-ohio-test",
+    "old_instance": "dashscope_vl",
+    "channel": "阿里云百炼",
+    "host": "dashscope.aliyuncs.com",
+    "host_source": "显式地址",
+    "protocol": "openai",
+    "proposed_instance": "阿里云百炼_openai_vl",
+    "models": [
+      "qwen3-vl-plus",
+      "qwen3.5-flash"
+    ],
+    "resource_group": 2
+  },
+  {
+    "environment": "aws-ohio-test",
+    "old_instance": "aig_gemini_image",
+    "channel": "AIG",
+    "host": "api.aig-ai.com",
+    "host_source": "显式地址",
+    "protocol": "gemini",
+    "proposed_instance": "AIG_gemini",
+    "models": [
+      "gemini-3-pro-image",
+      "gemini-2.5-flash-image",
+      "gemini-3.1-flash-image"
+    ],
+    "resource_group": 3
+  },
+  {
+    "environment": "aws-ohio-test",
+    "old_instance": "gemini_api_image",
+    "channel": "Gemini Developer API",
+    "host": "generativelanguage.googleapis.com",
+    "host_source": "SDK 默认",
+    "protocol": "gemini",
+    "proposed_instance": "Gemini_Developer_API_image",
+    "models": [
+      "gemini-2.5-flash-image",
+      "gemini-3.1-flash-image"
+    ],
+    "resource_group": 1
+  },
+  {
+    "environment": "aws-ohio-test",
+    "old_instance": "aig_gpt_image",
+    "channel": "AIG",
+    "host": "api.aig-ai.com",
+    "host_source": "显式地址",
+    "protocol": "openai",
+    "proposed_instance": "AIG_openai",
+    "models": [
+      "gpt-image-2",
+      "gpt-image-2.5-flare",
+      "gpt-image-2.5-sunburst"
+    ],
+    "resource_group": 4
+  },
+  {
+    "environment": "aws-ohio-test",
+    "old_instance": "dashscope_video",
+    "channel": "阿里云百炼",
+    "host": "dashscope.aliyuncs.com",
+    "host_source": "显式地址",
+    "protocol": "dashscope_video",
+    "proposed_instance": "阿里云百炼_dashscope_video",
+    "models": [
+      "wan2.2-i2v-flash",
+      "wan2.2-i2v-plus",
+      "wan2.2-i2v-turbo",
+      "wan2.6-i2v",
+      "wan2.6-i2v-flash",
+      "wan2.7-i2v",
+      "happyhorse-1.1-i2v",
+      "happyhorse-1.0-i2v",
+      "kling/kling-v3-video-generation",
+      "kling/kling-v3-omni-video-generation",
+      "wan2.7-videoedit"
+    ],
+    "resource_group": 5
+  },
+  {
+    "environment": "aws-ohio-test",
+    "old_instance": "ominilink_video",
+    "channel": "AIG VG",
+    "host": "vg-api.aig-ai.com",
+    "host_source": "显式地址",
+    "protocol": "ominilink_video",
+    "proposed_instance": "AIG_VG",
+    "models": [
+      "dreamina-seedance-2-0-mini",
+      "dreamina-seedance-2-0",
+      "dreamina-seedance-2-0-fast",
+      "kling-v2-master",
+      "kling-v2-1-master",
+      "kling-v2-5-turbo",
+      "kling-v2-6",
+      "kling-video-o1",
+      "kling-v3-omni",
+      "kling-v3",
+      "viduq3",
+      "viduq3-mix",
+      "viduq3-turbo",
+      "viduq3-pro-fast",
+      "viduq3-pro",
+      "veo-3.1-lite-generate-001",
+      "veo-3.1-fast-generate-001",
+      "veo-3.1-generate-001"
+    ],
+    "resource_group": 6
+  },
+  {
+    "environment": "aws-ohio-test",
+    "old_instance": "gemini_api_video",
+    "channel": "Gemini Developer API",
+    "host": "generativelanguage.googleapis.com",
+    "host_source": "显式地址",
+    "protocol": "gemini_video",
+    "proposed_instance": "Gemini_Developer_API_video",
+    "models": [
+      "gemini-omni-flash-preview"
+    ],
+    "resource_group": 7
+  },
+  {
+    "environment": "aws-ohio-test",
+    "old_instance": "photoroom_bg",
+    "channel": "Photoroom",
+    "host": "sdk.photoroom.com",
+    "host_source": "显式地址",
+    "protocol": "photoroom",
+    "proposed_instance": "Photoroom",
+    "models": [
+      "photoroom-segment"
+    ],
+    "resource_group": 8
+  },
+  {
+    "environment": "aws-ohio-test",
+    "old_instance": "elevenlabs_tts",
+    "channel": "ElevenLabs",
+    "host": "api.elevenlabs.io",
+    "host_source": "显式地址",
+    "protocol": "elevenlabs_tts",
+    "proposed_instance": "ElevenLabs",
+    "models": [
+      "eleven_flash_v2_5"
+    ],
+    "resource_group": 9
+  },
+  {
+    "environment": "aws-ohio-test",
+    "old_instance": "human_parser_cn",
+    "channel": "human-parser.model.wgdl.tech",
+    "host": "human-parser.model.wgdl.tech",
+    "host_source": "显式地址",
+    "protocol": "human_parser",
+    "proposed_instance": "human-parser.model.wgdl.tech",
+    "models": [
+      "human-parser"
+    ],
+    "resource_group": 10
+  },
+  {
+    "environment": "aws-ohio-test",
+    "old_instance": "rekognition_person",
+    "channel": "AWS Rekognition_us-east-2",
+    "host": "rekognition.us-east-2.amazonaws.com",
+    "host_source": "SDK 区域默认",
+    "protocol": "rekognition_detect",
+    "proposed_instance": "AWS_Rekognition_us-east-2_rekognition_detect",
+    "models": [
+      "rekognition-detect-labels"
+    ],
+    "resource_group": 11
+  },
+  {
+    "environment": "aws-ohio-test",
+    "old_instance": "rekognition_compare_us",
+    "channel": "AWS Rekognition_us-east-2",
+    "host": "rekognition.us-east-2.amazonaws.com",
+    "host_source": "SDK 区域默认",
+    "protocol": "rekognition_compare",
+    "proposed_instance": "AWS_Rekognition_us-east-2_rekognition_compare",
+    "models": [
+      "rekognition-compare-faces"
+    ],
+    "resource_group": 12
+  },
+  {
+    "environment": "aws-ohio-test",
+    "old_instance": "cohere_embedding_us",
+    "channel": "Cohere",
+    "host": "api.cohere.com",
+    "host_source": "显式地址",
+    "protocol": "cohere_embedding",
+    "proposed_instance": "Cohere_cohere_embedding",
+    "models": [
+      "embed-v4.0"
+    ],
+    "resource_group": 13
+  },
+  {
+    "environment": "aws-ohio-test",
+    "old_instance": "dashscope_rerank_us",
+    "channel": "阿里云百炼",
+    "host": "dashscope.aliyuncs.com",
+    "host_source": "显式地址",
+    "protocol": "dashscope_rerank",
+    "proposed_instance": "阿里云百炼_dashscope_rerank",
+    "models": [
+      "qwen3.7-text-rerank"
+    ],
+    "resource_group": 14
+  },
+  {
+    "environment": "aws-ohio-test",
+    "old_instance": "rekognition_faces_us",
+    "channel": "AWS Rekognition_us-east-2",
+    "host": "rekognition.us-east-2.amazonaws.com",
+    "host_source": "SDK 区域默认",
+    "protocol": "rekognition_faces",
+    "proposed_instance": "AWS_Rekognition_us-east-2_rekognition_faces",
+    "models": [
+      "rekognition-detect-faces"
+    ],
+    "resource_group": 15
+  },
+  {
+    "environment": "aws-ohio-test",
+    "old_instance": "rekognition_library_us",
+    "channel": "AWS Rekognition_us-east-2",
+    "host": "rekognition.us-east-2.amazonaws.com",
+    "host_source": "SDK 区域默认",
+    "protocol": "rekognition_library",
+    "proposed_instance": "AWS_Rekognition_us-east-2_rekognition_library",
+    "models": [
+      "rekognition-face-library"
+    ],
+    "resource_group": 16
+  },
+  {
+    "environment": "aws-ohio-test",
+    "old_instance": "bedrock_rerank_us",
+    "channel": "AWS Bedrock Agent Runtime_us-east-1",
+    "host": "bedrock-agent-runtime.us-east-1.amazonaws.com",
+    "host_source": "SDK 区域默认",
+    "protocol": "bedrock_rerank",
+    "proposed_instance": "AWS_Bedrock_Agent_Runtime_us-east-1_bedrock_rerank",
+    "models": [
+      "cohere.rerank-v3-5:0"
+    ],
+    "resource_group": 17
+  },
+  {
+    "environment": "aws-ohio-test",
+    "old_instance": "cohere_rerank_us",
+    "channel": "Cohere",
+    "host": "api.cohere.com",
+    "host_source": "显式地址",
+    "protocol": "cohere_rerank",
+    "proposed_instance": "Cohere_cohere_rerank",
+    "models": [
+      "rerank-v3.5"
+    ],
+    "resource_group": 18
+  },
+  {
+    "environment": "aws-ohio-test",
+    "old_instance": "mixedbread_rerank",
+    "channel": "Mixedbread",
+    "host": "api.mixedbread.com",
+    "host_source": "显式地址",
+    "protocol": "mixedbread_rerank",
+    "proposed_instance": "Mixedbread",
+    "models": [
+      "mixedbread-ai/mxbai-rerank-v3.1-listwise"
+    ],
+    "resource_group": 19
+  },
+  {
+    "environment": "aws-ohio-test",
+    "old_instance": "aliyun_maas",
+    "channel": "阿里云 MaaS_ws-qnsgk3r40cvpyn30",
+    "host": "ws-qnsgk3r40cvpyn30.us-east-1.maas.aliyuncs.com",
+    "host_source": "显式地址",
+    "protocol": "openai",
+    "proposed_instance": "阿里云_MaaS_ws-qnsgk3r40cvpyn30",
+    "models": [
+      "qwen3.8-flash",
+      "qwen3.7-plus",
+      "qwen-flash"
+    ],
+    "resource_group": 20
+  },
+  {
+    "environment": "aws-ohio-test",
+    "old_instance": "vertex_ai",
+    "channel": "Vertex AI",
+    "host": "aiplatform.googleapis.com",
+    "host_source": "SDK 默认",
+    "protocol": "vertexai",
+    "proposed_instance": "Vertex_AI",
+    "models": [
+      "gemini-2.5-flash",
+      "gemini-3.5-flash",
+      "gemini-3.7-flash",
+      "gemini-3.5-flash-lite",
+      "gemini-3.8-flash",
+      "gemini-3.1-pro-preview",
+      "gemini-3-pro-image",
+      "gemini-2.5-flash-image",
+      "gemini-3.1-flash-image"
+    ],
+    "resource_group": 21
+  },
+  {
+    "environment": "aws-ohio-test",
+    "old_instance": "薇光点亮_video",
+    "channel": "薇光点亮",
+    "host": "u847021-9507-702f766a.bjb2.seetacloud.com",
+    "host_source": "显式地址",
+    "protocol": "ltx",
+    "proposed_instance": "薇光点亮_video",
+    "models": [
+      "ltx"
+    ],
+    "resource_group": 22
+  },
+  {
+    "environment": "us-east-exhibition",
+    "old_instance": "gemini_api",
+    "channel": "Gemini Developer API",
+    "host": "generativelanguage.googleapis.com",
+    "host_source": "SDK 默认",
+    "protocol": "gemini",
+    "proposed_instance": "Gemini_Developer_API",
+    "models": [
+      "gemini-2.5-flash",
+      "gemini-3.5-flash",
+      "gemini-3.7-flash",
+      "gemini-3.5-flash-lite",
+      "gemini-3.8-flash"
+    ],
+    "resource_group": 1
+  },
+  {
+    "environment": "us-east-exhibition",
+    "old_instance": "dashscope_vl",
+    "channel": "阿里云百炼",
+    "host": "dashscope.aliyuncs.com",
+    "host_source": "显式地址",
+    "protocol": "openai",
+    "proposed_instance": "阿里云百炼_openai_vl",
+    "models": [
+      "qwen3-vl-plus",
+      "qwen3.5-flash"
+    ],
+    "resource_group": 2
+  },
+  {
+    "environment": "us-east-exhibition",
+    "old_instance": "aig_gemini_image",
+    "channel": "AIG",
+    "host": "api.aig-ai.com",
+    "host_source": "显式地址",
+    "protocol": "gemini",
+    "proposed_instance": "AIG_gemini",
+    "models": [
+      "gemini-3-pro-image",
+      "gemini-2.5-flash-image",
+      "gemini-3.1-flash-image"
+    ],
+    "resource_group": 3
+  },
+  {
+    "environment": "us-east-exhibition",
+    "old_instance": "gemini_api_image",
+    "channel": "Gemini Developer API",
+    "host": "generativelanguage.googleapis.com",
+    "host_source": "SDK 默认",
+    "protocol": "gemini",
+    "proposed_instance": "Gemini_Developer_API_image",
+    "models": [
+      "gemini-2.5-flash-image",
+      "gemini-3.1-flash-image"
+    ],
+    "resource_group": 1
+  },
+  {
+    "environment": "us-east-exhibition",
+    "old_instance": "薇光点亮_video",
+    "channel": "薇光点亮",
+    "host": "g7e.tomirro.prod",
+    "host_source": "显式地址",
+    "protocol": "ltx",
+    "proposed_instance": "薇光点亮_video",
+    "models": [
+      "VWorld_outfit_video_1.0"
+    ],
+    "resource_group": 4
+  },
+  {
+    "environment": "us-east-exhibition",
+    "old_instance": "aig_gpt_image",
+    "channel": "AIG",
+    "host": "api.aig-ai.com",
+    "host_source": "显式地址",
+    "protocol": "openai",
+    "proposed_instance": "AIG_openai",
+    "models": [
+      "gpt-image-2",
+      "gpt-image-2.5-flare",
+      "gpt-image-2.5-sunburst"
+    ],
+    "resource_group": 5
+  },
+  {
+    "environment": "us-east-exhibition",
+    "old_instance": "dashscope_video",
+    "channel": "阿里云百炼",
+    "host": "dashscope.aliyuncs.com",
+    "host_source": "显式地址",
+    "protocol": "dashscope_video",
+    "proposed_instance": "阿里云百炼_dashscope_video",
+    "models": [
+      "wan2.2-i2v-flash",
+      "wan2.2-i2v-plus",
+      "wan2.2-i2v-turbo",
+      "wan2.6-i2v",
+      "wan2.6-i2v-flash",
+      "wan2.7-i2v",
+      "happyhorse-1.1-i2v",
+      "happyhorse-1.0-i2v",
+      "kling/kling-v3-video-generation",
+      "kling/kling-v3-omni-video-generation",
+      "wan2.7-videoedit"
+    ],
+    "resource_group": 6
+  },
+  {
+    "environment": "us-east-exhibition",
+    "old_instance": "ominilink_video",
+    "channel": "AIG VG",
+    "host": "vg-api.aig-ai.com",
+    "host_source": "显式地址",
+    "protocol": "ominilink_video",
+    "proposed_instance": "AIG_VG",
+    "models": [
+      "dreamina-seedance-2-0-mini",
+      "dreamina-seedance-2-0",
+      "dreamina-seedance-2-0-fast",
+      "kling-v2-master",
+      "kling-v2-1-master",
+      "kling-v2-5-turbo",
+      "kling-v2-6",
+      "kling-video-o1",
+      "kling-v3-omni",
+      "kling-v3",
+      "viduq3",
+      "viduq3-mix",
+      "viduq3-turbo",
+      "viduq3-pro-fast",
+      "viduq3-pro",
+      "veo-3.1-lite-generate-001",
+      "veo-3.1-fast-generate-001",
+      "veo-3.1-generate-001"
+    ],
+    "resource_group": 7
+  },
+  {
+    "environment": "us-east-exhibition",
+    "old_instance": "gemini_api_video",
+    "channel": "Gemini Developer API",
+    "host": "generativelanguage.googleapis.com",
+    "host_source": "显式地址",
+    "protocol": "gemini_video",
+    "proposed_instance": "Gemini_Developer_API_video",
+    "models": [
+      "gemini-omni-flash-preview"
+    ],
+    "resource_group": 8
+  },
+  {
+    "environment": "us-east-exhibition",
+    "old_instance": "photoroom_bg",
+    "channel": "Photoroom",
+    "host": "sdk.photoroom.com",
+    "host_source": "显式地址",
+    "protocol": "photoroom",
+    "proposed_instance": "Photoroom",
+    "models": [
+      "photoroom-segment"
+    ],
+    "resource_group": 9
+  },
+  {
+    "environment": "us-east-exhibition",
+    "old_instance": "薇光点亮",
+    "channel": "薇光点亮",
+    "host": "172.31.43.7",
+    "host_source": "显式地址",
+    "protocol": "segment_person",
+    "proposed_instance": "薇光点亮",
+    "models": [
+      "segment-person-bria",
+      "segment-subject-bria"
+    ],
+    "resource_group": 10
+  },
+  {
+    "environment": "us-east-exhibition",
+    "old_instance": "elevenlabs_tts",
+    "channel": "ElevenLabs",
+    "host": "api.elevenlabs.io",
+    "host_source": "显式地址",
+    "protocol": "elevenlabs_tts",
+    "proposed_instance": "ElevenLabs",
+    "models": [
+      "eleven_flash_v2_5"
+    ],
+    "resource_group": 11
+  },
+  {
+    "environment": "us-east-exhibition",
+    "old_instance": "human_parser_cn",
+    "channel": "human-parser.model.wgdl.tech",
+    "host": "human-parser.model.wgdl.tech",
+    "host_source": "显式地址",
+    "protocol": "human_parser",
+    "proposed_instance": "human-parser.model.wgdl.tech",
+    "models": [
+      "human-parser"
+    ],
+    "resource_group": 12
+  },
+  {
+    "environment": "us-east-exhibition",
+    "old_instance": "rekognition_person",
+    "channel": "AWS Rekognition_us-east-2",
+    "host": "rekognition.us-east-2.amazonaws.com",
+    "host_source": "SDK 区域默认",
+    "protocol": "rekognition_detect",
+    "proposed_instance": "AWS_Rekognition_us-east-2_rekognition_detect",
+    "models": [
+      "rekognition-detect-labels"
+    ],
+    "resource_group": 13
+  },
+  {
+    "environment": "us-east-exhibition",
+    "old_instance": "rekognition_compare_us",
+    "channel": "AWS Rekognition_us-east-2",
+    "host": "rekognition.us-east-2.amazonaws.com",
+    "host_source": "SDK 区域默认",
+    "protocol": "rekognition_compare",
+    "proposed_instance": "AWS_Rekognition_us-east-2_rekognition_compare",
+    "models": [
+      "rekognition-compare-faces"
+    ],
+    "resource_group": 14
+  },
+  {
+    "environment": "us-east-exhibition",
+    "old_instance": "cohere_embedding_us",
+    "channel": "Cohere",
+    "host": "api.cohere.com",
+    "host_source": "显式地址",
+    "protocol": "cohere_embedding",
+    "proposed_instance": "Cohere_cohere_embedding",
+    "models": [
+      "embed-v4.0"
+    ],
+    "resource_group": 15
+  },
+  {
+    "environment": "us-east-exhibition",
+    "old_instance": "dashscope_rerank_us",
+    "channel": "阿里云百炼",
+    "host": "dashscope.aliyuncs.com",
+    "host_source": "显式地址",
+    "protocol": "dashscope_rerank",
+    "proposed_instance": "阿里云百炼_dashscope_rerank",
+    "models": [
+      "qwen3.7-text-rerank"
+    ],
+    "resource_group": 16
+  },
+  {
+    "environment": "us-east-exhibition",
+    "old_instance": "rekognition_faces_us",
+    "channel": "AWS Rekognition_us-east-2",
+    "host": "rekognition.us-east-2.amazonaws.com",
+    "host_source": "SDK 区域默认",
+    "protocol": "rekognition_faces",
+    "proposed_instance": "AWS_Rekognition_us-east-2_rekognition_faces",
+    "models": [
+      "rekognition-detect-faces"
+    ],
+    "resource_group": 17
+  },
+  {
+    "environment": "us-east-exhibition",
+    "old_instance": "rekognition_library_us",
+    "channel": "AWS Rekognition_us-east-2",
+    "host": "rekognition.us-east-2.amazonaws.com",
+    "host_source": "SDK 区域默认",
+    "protocol": "rekognition_library",
+    "proposed_instance": "AWS_Rekognition_us-east-2_rekognition_library",
+    "models": [
+      "rekognition-face-library"
+    ],
+    "resource_group": 18
+  },
+  {
+    "environment": "us-east-exhibition",
+    "old_instance": "bedrock_rerank_us",
+    "channel": "AWS Bedrock Agent Runtime_us-east-1",
+    "host": "bedrock-agent-runtime.us-east-1.amazonaws.com",
+    "host_source": "SDK 区域默认",
+    "protocol": "bedrock_rerank",
+    "proposed_instance": "AWS_Bedrock_Agent_Runtime_us-east-1_bedrock_rerank",
+    "models": [
+      "cohere.rerank-v3-5:0"
+    ],
+    "resource_group": 19
+  },
+  {
+    "environment": "us-east-exhibition",
+    "old_instance": "cohere_rerank_us",
+    "channel": "Cohere",
+    "host": "api.cohere.com",
+    "host_source": "显式地址",
+    "protocol": "cohere_rerank",
+    "proposed_instance": "Cohere_cohere_rerank",
+    "models": [
+      "rerank-v3.5"
+    ],
+    "resource_group": 20
+  },
+  {
+    "environment": "us-east-exhibition",
+    "old_instance": "mixedbread_rerank",
+    "channel": "Mixedbread",
+    "host": "api.mixedbread.com",
+    "host_source": "显式地址",
+    "protocol": "mixedbread_rerank",
+    "proposed_instance": "Mixedbread",
+    "models": [
+      "mixedbread-ai/mxbai-rerank-v3.1-listwise"
+    ],
+    "resource_group": 21
+  },
+  {
+    "environment": "us-east-exhibition",
+    "old_instance": "薇光点亮_image",
+    "channel": "薇光点亮",
+    "host": "g7e.tomirro.prod",
+    "host_source": "显式地址",
+    "protocol": "vworld_image",
+    "proposed_instance": "薇光点亮_image",
+    "models": [
+      "VWorld_wardrobe-1.0",
+      "VWorld_outfit_1.0",
+      "VWorld_bodymodel_1.0"
+    ],
+    "resource_group": 22
+  },
+  {
+    "environment": "us-east-exhibition",
+    "old_instance": "human_parse_g7",
+    "channel": "172.31.42.52",
+    "host": "172.31.42.52",
+    "host_source": "显式地址",
+    "protocol": "human_parser",
+    "proposed_instance": "172.31.42.52",
+    "models": [
+      "human_parse"
+    ],
+    "resource_group": 23
+  },
+  {
+    "environment": "us-east-exhibition",
+    "old_instance": "assemblyai_asr",
+    "channel": "AssemblyAI",
+    "host": "streaming.assemblyai.com",
+    "host_source": "显式地址",
+    "protocol": "assemblyai_asr",
+    "proposed_instance": "AssemblyAI",
+    "models": [
+      "universal-3-5-pro"
+    ],
+    "resource_group": 24
+  },
+  {
+    "environment": "us-east-exhibition",
+    "old_instance": "deepgram_asr",
+    "channel": "Deepgram",
+    "host": "api.deepgram.com",
+    "host_source": "显式地址",
+    "protocol": "deepgram_asr",
+    "proposed_instance": "Deepgram",
+    "models": [
+      "nova-3"
+    ],
+    "resource_group": 25
+  },
+  {
+    "environment": "us-east-exhibition",
+    "old_instance": "volcengine_asr",
+    "channel": "火山语音",
+    "host": "openspeech.bytedance.com",
+    "host_source": "显式地址",
+    "protocol": "volcengine_asr",
+    "proposed_instance": "火山语音",
+    "models": [
+      "volcengine-bigmodel-streaming"
+    ],
+    "resource_group": 26
+  },
+  {
+    "environment": "us-east-exhibition",
+    "old_instance": "vertex_ai",
+    "channel": "Vertex AI",
+    "host": "aiplatform.googleapis.com",
+    "host_source": "SDK 默认",
+    "protocol": "vertexai",
+    "proposed_instance": "Vertex_AI",
+    "models": [
+      "gemini-2.5-flash",
+      "gemini-nano-banana-2.1",
+      "gemini-3.5-flash-lite",
+      "gemini-3.5-flash",
+      "gemini-3.7-flash",
+      "gemini-3.8-flash",
+      "gemini-3-pro-image",
+      "gemini-2.5-flash-image",
+      "gemini-3.1-flash-image"
+    ],
+    "resource_group": 27
+  }
+]

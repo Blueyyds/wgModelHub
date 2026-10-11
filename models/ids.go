@@ -55,7 +55,7 @@ const (
 	GeminiNanoBanana21 = "gemini-nano-banana-2.1"
 	GPTImage2          = "gpt-image-2"
 	// GPTImage25Flare / GPTImage25Sunburst 是 GPT Image 2.5 真实模型 ID。
-	// 与 GPTImage2 一并绑现网已实测的 AIG OpenAI-compatible Images 实例（async_gpt_image），不能并入 Gemini 生图。
+	// 与 GPTImage2 一并绑 AIG OpenAI-compatible Images 实例（示例与审计目标键 AIG_openai，地址仍是 https://api.aig-ai.com/v1），不能并入 Gemini 生图。
 	GPTImage25Flare    = "gpt-image-2.5-flare"
 	GPTImage25Sunburst = "gpt-image-2.5-sunburst"
 	// Flux2Klein9B 当前 SeeTacloud 部署只开放 image edit / 多图 i2i，不能当文生图用。
@@ -116,8 +116,8 @@ const (
 	RekognitionFaceLibrary = "rekognition-face-library"
 	// HumanParser 是旧自建人体解析 POST /predict。国内和新加坡仍用这个 ID。
 	HumanParser = "human-parser"
-	// HumanParse 是薇光点亮 G7 人体解析 POST /human_parser/predict。
-	// 与 human-parser 不能互换：路径、鉴权和部署面都不同，路演单独切这个 ID。
+	// HumanParse 是 G7 人体解析 POST /human_parser/predict。
+	// 与 human-parser 不能互换：路径、鉴权和部署面都不同，路演单独切这个 ID。目标 host 单独成渠道，不归入薇光点亮。
 	HumanParse = "human_parse"
 
 	// DashScope Wan / HappyHorse / Kling 图生视频。

@@ -51,15 +51,21 @@ func main() {
 	}
 
 	live := config.NewLiveConfig(runtimeConfig)
-	if err := configLoader.Listen(func(_, _, data string) {
-		live.ApplyYAML(data)
-	}); err != nil {
-		fatal("runtime_config_listen_failed", err)
-	}
-
 	telemetryRuntime, err := telemetry.Setup(ctx, runtimeConfig.Logfire)
 	if err != nil {
 		fatal("telemetry_setup_failed", err)
+	}
+	// 渠道挂在已有 /metrics 上。Listen 放在指标装配之后，避免变更回调先于 Registry 就绪。
+	if err := telemetryRuntime.PublishChannels(live.Load().Providers); err != nil {
+		fatal("channel_metrics_publish_failed", err)
+	}
+	if err := configLoader.Listen(func(_, _, data string) {
+		live.ApplyYAML(data)
+		if err := telemetryRuntime.PublishChannels(live.Load().Providers); err != nil {
+			logs.Default().Error("channel_metrics_update_failed", "error", err)
+		}
+	}); err != nil {
+		fatal("runtime_config_listen_failed", err)
 	}
 	defer func() {
 		shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 5*time.Second)

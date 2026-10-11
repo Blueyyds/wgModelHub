@@ -1,0 +1,607 @@
+{
+  "environment": "cn-dev",
+  "metadata": {
+    "DataId": "wg.mirror.modelHub",
+    "Md5": "f10dbe08f6d8598a6aa903215c6ad1a3"
+  },
+  "read_at": "2026-10-11T14:33:09.078929+00:00",
+  "providers": [
+    {
+      "instance": "gemini_api",
+      "models": [
+        "gemini-2.5-flash",
+        "gemini-3.5-flash",
+        "gemini-3.7-flash",
+        "gemini-3.8-flash",
+        "gemini-3.5-flash-lite"
+      ],
+      "protocols": [
+        {
+          "protocol": "gemini",
+          "hosts": {},
+          "proxy_configured": true
+        }
+      ],
+      "resource_group": 1
+    },
+    {
+      "instance": "dashscope_chat",
+      "models": [
+        "qwen-flash",
+        "qwen3.7-flash",
+        "qwen3.8-flash"
+      ],
+      "protocols": [
+        {
+          "protocol": "openai",
+          "hosts": {
+            "base_url": "dashscope.aliyuncs.com"
+          },
+          "proxy_configured": false
+        }
+      ],
+      "resource_group": 2
+    },
+    {
+      "instance": "dashscope_vl",
+      "models": [
+        "qwen3-vl-plus",
+        "qwen3.5-flash"
+      ],
+      "protocols": [
+        {
+          "protocol": "openai",
+          "hosts": {
+            "base_url": "dashscope.aliyuncs.com"
+          },
+          "proxy_configured": false
+        }
+      ],
+      "resource_group": 2
+    },
+    {
+      "instance": "aig_gemini_image",
+      "models": [
+        "gemini-3-pro-image",
+        "gemini-2.5-flash-image",
+        "gemini-3.1-flash-image"
+      ],
+      "protocols": [
+        {
+          "protocol": "gemini",
+          "hosts": {
+            "base_url": "api.aig-ai.com"
+          },
+          "proxy_configured": false
+        }
+      ],
+      "resource_group": 3
+    },
+    {
+      "instance": "gemini_api_image",
+      "models": [
+        "gemini-2.5-flash-image",
+        "gemini-3.1-flash-image"
+      ],
+      "protocols": [
+        {
+          "protocol": "gemini",
+          "hosts": {},
+          "proxy_configured": true
+        }
+      ],
+      "resource_group": 1
+    },
+    {
+      "instance": "薇光点亮_video",
+      "models": [
+        "VWorld_outfit_video_1.0"
+      ],
+      "protocols": [
+        {
+          "protocol": "ltx",
+          "hosts": {
+            "base_url": "u847021-acf7-512372b5.bjb2.seetacloud.com"
+          },
+          "proxy_configured": false
+        }
+      ],
+      "resource_group": 4
+    },
+    {
+      "instance": "aig_gpt_image",
+      "models": [
+        "gpt-image-2",
+        "gpt-image-2.5-flare",
+        "gpt-image-2.5-sunburst"
+      ],
+      "protocols": [
+        {
+          "protocol": "openai",
+          "hosts": {
+            "base_url": "api.aig-ai.com"
+          },
+          "proxy_configured": false
+        }
+      ],
+      "resource_group": 5
+    },
+    {
+      "instance": "dashscope_video",
+      "models": [
+        "wan2.2-i2v-flash",
+        "wan2.2-i2v-plus",
+        "wan2.2-i2v-turbo",
+        "wan2.6-i2v",
+        "wan2.6-i2v-flash",
+        "wan2.7-i2v",
+        "happyhorse-1.1-i2v",
+        "happyhorse-1.0-i2v",
+        "kling/kling-v3-video-generation",
+        "kling/kling-v3-omni-video-generation",
+        "wan2.7-videoedit"
+      ],
+      "protocols": [
+        {
+          "protocol": "dashscope_video",
+          "hosts": {
+            "base_url": "dashscope.aliyuncs.com"
+          },
+          "proxy_configured": false
+        }
+      ],
+      "resource_group": 6
+    },
+    {
+      "instance": "ominilink_video",
+      "models": [
+        "dreamina-seedance-2-0-mini",
+        "dreamina-seedance-2-0-fast",
+        "kling-v2-master",
+        "kling-v2-1-master",
+        "kling-v2-5-turbo",
+        "kling-v2-6",
+        "kling-video-o1",
+        "kling-v3-omni",
+        "kling-v3",
+        "viduq3",
+        "viduq3-mix",
+        "viduq3-turbo",
+        "viduq3-pro-fast",
+        "viduq3-pro",
+        "veo-3.1-lite-generate-001",
+        "veo-3.1-fast-generate-001",
+        "veo-3.1-generate-001"
+      ],
+      "protocols": [
+        {
+          "protocol": "ominilink_video",
+          "hosts": {
+            "base_url": "vg-api.aig-ai.com"
+          },
+          "proxy_configured": false
+        }
+      ],
+      "resource_group": 7
+    },
+    {
+      "instance": "gemini_api_video",
+      "models": [
+        "gemini-omni-flash-preview"
+      ],
+      "protocols": [
+        {
+          "protocol": "gemini_video",
+          "hosts": {
+            "base_url": "generativelanguage.googleapis.com"
+          },
+          "proxy_configured": true
+        }
+      ],
+      "resource_group": 8
+    },
+    {
+      "instance": "ark_video",
+      "models": [
+        "doubao-seedance-2-0-260128"
+      ],
+      "protocols": [
+        {
+          "protocol": "ark_video",
+          "hosts": {
+            "base_url": "ark.cn-beijing.volces.com"
+          },
+          "proxy_configured": false
+        }
+      ],
+      "resource_group": 9
+    },
+    {
+      "instance": "minimax_tts",
+      "models": [
+        "speech-2.8-turbo"
+      ],
+      "protocols": [
+        {
+          "protocol": "minimax_tts",
+          "hosts": {
+            "endpoint": "api.minimaxi.com"
+          },
+          "proxy_configured": false
+        }
+      ],
+      "resource_group": 10
+    },
+    {
+      "instance": "ark_doubao_mini",
+      "models": [
+        "doubao-seed-2.0-mini"
+      ],
+      "protocols": [
+        {
+          "protocol": "ark",
+          "hosts": {
+            "base_url": "ark.cn-beijing.volces.com"
+          },
+          "proxy_configured": false
+        }
+      ],
+      "resource_group": 11
+    },
+    {
+      "instance": "ark_doubao_lite",
+      "models": [
+        "doubao-seed-2.0-lite"
+      ],
+      "protocols": [
+        {
+          "protocol": "ark",
+          "hosts": {
+            "base_url": "ark.cn-beijing.volces.com"
+          },
+          "proxy_configured": false
+        }
+      ],
+      "resource_group": 12
+    },
+    {
+      "instance": "ark_doubao_21_pro",
+      "models": [
+        "doubao-seed-2.1-pro"
+      ],
+      "protocols": [
+        {
+          "protocol": "ark",
+          "hosts": {
+            "base_url": "ark.cn-beijing.volces.com"
+          },
+          "proxy_configured": false
+        }
+      ],
+      "resource_group": 13
+    },
+    {
+      "instance": "ark_deepseek_v4_flash",
+      "models": [
+        "deepseek-v4-flash"
+      ],
+      "protocols": [
+        {
+          "protocol": "ark",
+          "hosts": {
+            "base_url": "ark.cn-beijing.volces.com"
+          },
+          "proxy_configured": false
+        }
+      ],
+      "resource_group": 14
+    },
+    {
+      "instance": "ark_deepseek_v41_flash",
+      "models": [
+        "deepseek-v4.1-flash"
+      ],
+      "protocols": [
+        {
+          "protocol": "ark",
+          "hosts": {
+            "base_url": "ark.cn-beijing.volces.com"
+          },
+          "proxy_configured": false
+        }
+      ],
+      "resource_group": 15
+    },
+    {
+      "instance": "zhipu_glm",
+      "models": [
+        "glm-5.3-flash"
+      ],
+      "protocols": [
+        {
+          "protocol": "openai",
+          "hosts": {
+            "base_url": "open.bigmodel.cn"
+          },
+          "proxy_configured": false
+        }
+      ],
+      "resource_group": 16
+    },
+    {
+      "instance": "薇光点亮",
+      "models": [
+        "segment-person-bria",
+        "segment-subject-bria"
+      ],
+      "protocols": [
+        {
+          "protocol": "segment_person",
+          "hosts": {
+            "base_url": "segment-person.model.wgdl.tech"
+          },
+          "proxy_configured": false
+        }
+      ],
+      "resource_group": 17
+    },
+    {
+      "instance": "human_yolo_cn",
+      "models": [
+        "human-yolo"
+      ],
+      "protocols": [
+        {
+          "protocol": "human_yolo",
+          "hosts": {
+            "base_url": "human-yolo.model.wgdl.tech"
+          },
+          "proxy_configured": false
+        }
+      ],
+      "resource_group": 18
+    },
+    {
+      "instance": "human_parser_cn",
+      "models": [
+        "human-parser"
+      ],
+      "protocols": [
+        {
+          "protocol": "human_parser",
+          "hosts": {
+            "base_url": "human-parser.model.wgdl.tech"
+          },
+          "proxy_configured": false
+        }
+      ],
+      "resource_group": 19
+    },
+    {
+      "instance": "facebody_compare_cn",
+      "models": [
+        "facebody-compare-face"
+      ],
+      "protocols": [
+        {
+          "protocol": "facebody_compare",
+          "hosts": {
+            "endpoint": "facebody.cn-shanghai.aliyuncs.com"
+          },
+          "proxy_configured": false
+        }
+      ],
+      "resource_group": 20
+    },
+    {
+      "instance": "dashscope_embedding_cn",
+      "models": [
+        "qwen3-vl-embedding"
+      ],
+      "protocols": [
+        {
+          "protocol": "dashscope_embedding",
+          "hosts": {
+            "base_url": "dashscope.aliyuncs.com"
+          },
+          "proxy_configured": false
+        }
+      ],
+      "resource_group": 21
+    },
+    {
+      "instance": "dashscope_rerank_cn",
+      "models": [
+        "qwen3.7-text-rerank"
+      ],
+      "protocols": [
+        {
+          "protocol": "dashscope_rerank",
+          "hosts": {
+            "base_url": "dashscope.aliyuncs.com"
+          },
+          "proxy_configured": false
+        }
+      ],
+      "resource_group": 22
+    },
+    {
+      "instance": "facebody_detect_cn",
+      "models": [
+        "facebody-detect-face"
+      ],
+      "protocols": [
+        {
+          "protocol": "facebody_detect",
+          "hosts": {
+            "endpoint": "facebody.cn-shanghai.aliyuncs.com"
+          },
+          "proxy_configured": false
+        }
+      ],
+      "resource_group": 23
+    },
+    {
+      "instance": "facebody_library_cn",
+      "models": [
+        "facebody-face-library"
+      ],
+      "protocols": [
+        {
+          "protocol": "facebody_library",
+          "hosts": {
+            "endpoint": "facebody.cn-shanghai.aliyuncs.com"
+          },
+          "proxy_configured": false
+        }
+      ],
+      "resource_group": 24
+    },
+    {
+      "instance": "photoroom_bg",
+      "models": [
+        "photoroom-segment"
+      ],
+      "protocols": [
+        {
+          "protocol": "photoroom",
+          "hosts": {
+            "base_url": "sdk.photoroom.com"
+          },
+          "proxy_configured": true
+        }
+      ],
+      "resource_group": 25
+    },
+    {
+      "instance": "薇光点亮_image",
+      "models": [
+        "VWorld_wardrobe-1.0",
+        "VWorld_outfit_1.0"
+      ],
+      "protocols": [
+        {
+          "protocol": "vworld_image",
+          "hosts": {
+            "base_url": "uu847021-b068-dc1cca42.westd.seetacloud.com"
+          },
+          "proxy_configured": false
+        }
+      ],
+      "resource_group": 26
+    },
+    {
+      "instance": "volcengine_asr",
+      "models": [
+        "volcengine-bigmodel-streaming"
+      ],
+      "protocols": [
+        {
+          "protocol": "volcengine_asr",
+          "hosts": {
+            "url": "openspeech.bytedance.com"
+          },
+          "proxy_configured": false
+        }
+      ],
+      "resource_group": 27
+    },
+    {
+      "instance": "aliyun_asr",
+      "models": [
+        "aliyun-nls"
+      ],
+      "protocols": [
+        {
+          "protocol": "aliyun_asr",
+          "hosts": {
+            "url": "nls-gateway-cn-shenzhen.aliyuncs.com"
+          },
+          "proxy_configured": false
+        }
+      ],
+      "resource_group": 28
+    },
+    {
+      "instance": "fun_asr",
+      "models": [
+        "fun-asr-realtime"
+      ],
+      "protocols": [
+        {
+          "protocol": "fun_asr",
+          "hosts": {},
+          "proxy_configured": false
+        }
+      ],
+      "resource_group": 29
+    },
+    {
+      "instance": "qwen_asr",
+      "models": [
+        "qwen3-asr-flash-realtime-2026-02-10"
+      ],
+      "protocols": [
+        {
+          "protocol": "qwen_asr",
+          "hosts": {},
+          "proxy_configured": false
+        }
+      ],
+      "resource_group": 30
+    },
+    {
+      "instance": "tencent_asr",
+      "models": [
+        "16k_zh"
+      ],
+      "protocols": [
+        {
+          "protocol": "tencent_asr",
+          "hosts": {},
+          "proxy_configured": false
+        }
+      ],
+      "resource_group": 31
+    },
+    {
+      "instance": "vertex_ai",
+      "models": [
+        "gemini-2.5-flash",
+        "gemini-nano-banana-2.1",
+        "gemini-3.7-flash",
+        "gemini-3.5-flash",
+        "gemini-3.8-flash",
+        "gemini-3.5-flash-lite",
+        "gemini-3-pro-image",
+        "gemini-2.5-flash-image",
+        "gemini-3.1-flash-image"
+      ],
+      "protocols": [
+        {
+          "protocol": "vertexai",
+          "hosts": {},
+          "proxy_configured": true
+        }
+      ],
+      "resource_group": 32
+    }
+  ],
+  "model_routes": {
+    "gemini-2.5-flash": "vertex_ai",
+    "gemini-2.5-flash-image": "vertex_ai",
+    "gemini-3.1-flash-image": "vertex_ai",
+    "gemini-3.7-flash": {
+      "default": "vertex_ai",
+      "race": [
+        "gemini_api",
+        "vertex_ai"
+      ]
+    },
+    "gemini-3.5-flash": "vertex_ai",
+    "gemini-3.8-flash": "vertex_ai",
+    "gemini-3.5-flash-lite": "vertex_ai",
+    "gemini-3-pro-image": "vertex_ai",
+    "gemini-nano-banana-2.1": "vertex_ai"
+  }
+}

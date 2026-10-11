@@ -39,3 +39,8 @@ func (r *Reader) ManualReader() sdkmetric.Reader {
 func (r *Reader) Handler() http.Handler {
 	return promhttp.HandlerFor(r.registry, promhttp.HandlerOpts{})
 }
+
+// Registerer 是 /metrics 使用的同一个 Registry。渠道信息挂在这里，不再开管理端口。
+func (r *Reader) Registerer() prometheus.Registerer {
+	return r.registry
+}
