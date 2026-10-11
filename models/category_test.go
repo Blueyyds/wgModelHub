@@ -44,6 +44,7 @@ func TestCategoryOfKnownIDs(t *testing.T) {
 		{Flux2Klein9B, CategoryImageGeneration},
 		{VWorldWardrobe10, CategoryImageGeneration},
 		{VWorldOutfit10, CategoryImageGeneration},
+		{VWorldBodyModel10, CategoryImageGeneration},
 		{PhotoroomSegment, CategorySegment},
 		{SegmentPersonBria, CategorySegment},
 		{SegmentSubjectBria, CategorySegment},

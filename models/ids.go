@@ -66,6 +66,9 @@ const (
 	VWorldWardrobe10 = "VWorld_wardrobe-1.0"
 	// VWorldOutfit10 是薇光点亮虚拟换衣（edits + vton）。尺寸固定 768x1024，禁止走 OpenAI 3:4 换算。
 	VWorldOutfit10 = "VWorld_outfit_1.0"
+	// VWorldBodyModel10 是薇光点亮体模生图 POST /v1/images/body_model，LoRA 固定 body_model。
+	// 提示词和 1024x1536 由上游固定；不能下发本 ID 或 FLUX.2-klein-9B，也不能复用拆衣服/换衣的字段。
+	VWorldBodyModel10 = "VWorld_bodymodel_1.0"
 	// VWorldOutfitVideo10 是薇光点亮穿搭视频的唯一对外模型 ID。
 	// 路由绑 LTX provider；/vton 的 multipart model 仍写 ltx，不能把本 ID 原样下发，也不能再把 ltx 当 request.model。
 	VWorldOutfitVideo10 = "VWorld_outfit_video_1.0"
@@ -205,6 +208,7 @@ func All() []string {
 		Flux2Klein9B,
 		VWorldWardrobe10,
 		VWorldOutfit10,
+		VWorldBodyModel10,
 		PhotoroomSegment,
 		SegmentPersonBria,
 		SegmentSubjectBria,

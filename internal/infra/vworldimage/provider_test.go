@@ -326,6 +326,75 @@ func TestVTONEditsContract(t *testing.T) {
 	}
 }
 
+func TestBodyModelContract(t *testing.T) {
+	person := pngBytes(t)
+	out := pngBytes(t)
+	var gotAuth string
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/v1/images/body_model" {
+			t.Fatalf("path = %q", r.URL.Path)
+		}
+		gotAuth = r.Header.Get("Authorization")
+		if err := r.ParseMultipartForm(8 << 20); err != nil {
+			t.Fatal(err)
+		}
+		if r.Form.Has("model") || r.Form.Has("prompt") || r.Form.Has("seed") {
+			t.Fatalf("must not forward model/prompt/seed: %#v", r.Form)
+		}
+		if r.FormValue("lora_name") != loraBodyModel || r.FormValue("lora_strength") != loraStrength {
+			t.Fatalf("lora = %q/%q", r.FormValue("lora_name"), r.FormValue("lora_strength"))
+		}
+		if r.FormValue("size") != bodyModelSize || r.FormValue("response_format") != responseFormat || r.FormValue("n") != "1" {
+			t.Fatalf("form = %#v", r.Form)
+		}
+		if r.FormValue("size") == vtonSize {
+			t.Fatal("must not reuse vton size")
+		}
+		files := r.MultipartForm.File["image"]
+		if len(files) != 1 {
+			t.Fatalf("image count = %d", len(files))
+		}
+		f, err := files[0].Open()
+		if err != nil {
+			t.Fatal(err)
+		}
+		data, err := io.ReadAll(f)
+		_ = f.Close()
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !bytes.Equal(data, person) {
+			t.Fatal("person bytes were not forwarded")
+		}
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"data": []map[string]string{{"b64_json": base64.StdEncoding.EncodeToString(out)}},
+		})
+	}))
+	defer server.Close()
+
+	p := newTestProvider(t, server.URL)
+	event, err := p.GenerateImage(context.Background(), models.VWorldBodyModel10, outfitRequest(person, nil, "caller prompt must be dropped"))
+	if err == nil {
+		t.Fatal("two images must be rejected before HTTP")
+	}
+	req := wardrobeRequest(person, "caller prompt must be dropped")
+	req.Output = &modelhubv2.OutputSpec{Kind: &modelhubv2.OutputSpec_Image{Image: &modelhubv2.ImageOutput{
+		AspectRatio: strPtr("3:4"),
+		ImageSize:   strPtr("2K"),
+	}}}
+	event, err = p.GenerateImage(context.Background(), models.VWorldBodyModel10, req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	user, pass, ok := parseBasicAuth(gotAuth)
+	if !ok || user != "wgdl" || pass != "secret" {
+		t.Fatalf("basic auth = %q", gotAuth)
+	}
+	if got := event.GetItems()[0].GetImage().GetData(); !bytes.Equal(got, out) {
+		t.Fatalf("output len=%d", len(got))
+	}
+}
+
 func TestRejectsWrongImageCountsAndUnknownModel(t *testing.T) {
 	pngData := pngBytes(t)
 	p := newTestProvider(t, "https://vmind-image.example")
@@ -337,6 +406,12 @@ func TestRejectsWrongImageCountsAndUnknownModel(t *testing.T) {
 	}
 	if _, err := p.GenerateImage(context.Background(), models.Flux2Klein9B, wardrobeRequest(pngData, `{"garment_name":"x"}`)); err == nil {
 		t.Fatal("expected unknown model error")
+	}
+	if _, err := p.GenerateImage(context.Background(), models.VWorldBodyModel10, wardrobeRequest(pngData, "prompt", pngData)); err == nil {
+		t.Fatal("expected body model extra image error")
+	}
+	if _, err := p.GenerateImage(context.Background(), models.VWorldBodyModel10, &modelhubv2.GenerateRequest{}); err == nil {
+		t.Fatal("expected body model missing image error")
 	}
 }
 

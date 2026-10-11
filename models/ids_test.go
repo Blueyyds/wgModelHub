@@ -71,12 +71,12 @@ func TestFlux2Klein9BModelID(t *testing.T) {
 	}
 }
 
-// TestVWorldImageModelIDs 锁定薇光点亮拆衣服/虚拟换衣真实 ID，禁止与 SeeTacloud FLUX.2 混用同一字符串。
+// TestVWorldImageModelIDs 锁定薇光点亮拆衣服/虚拟换衣/体模真实 ID，禁止与 SeeTacloud FLUX.2 混用同一字符串。
 func TestVWorldImageModelIDs(t *testing.T) {
-	if VWorldWardrobe10 != "VWorld_wardrobe-1.0" || VWorldOutfit10 != "VWorld_outfit_1.0" {
-		t.Fatalf("VWorld IDs drifted: %q %q", VWorldWardrobe10, VWorldOutfit10)
+	if VWorldWardrobe10 != "VWorld_wardrobe-1.0" || VWorldOutfit10 != "VWorld_outfit_1.0" || VWorldBodyModel10 != "VWorld_bodymodel_1.0" {
+		t.Fatalf("VWorld IDs drifted: %q %q %q", VWorldWardrobe10, VWorldOutfit10, VWorldBodyModel10)
 	}
-	if !slices.Contains(All(), VWorldWardrobe10) || !slices.Contains(All(), VWorldOutfit10) {
+	if !slices.Contains(All(), VWorldWardrobe10) || !slices.Contains(All(), VWorldOutfit10) || !slices.Contains(All(), VWorldBodyModel10) {
 		t.Fatal("All() missing VWorld image model IDs")
 	}
 }

@@ -184,7 +184,7 @@ func TestExampleYAMLUsesExactlyKnownModelIDs(t *testing.T) {
 	if !ok {
 		t.Fatal("missing provider vworld_flux_image")
 	}
-	if len(vworld.Models) != 2 || vworld.Models[0] != models.VWorldWardrobe10 || vworld.Models[1] != models.VWorldOutfit10 {
+	if len(vworld.Models) != 3 || vworld.Models[0] != models.VWorldWardrobe10 || vworld.Models[1] != models.VWorldOutfit10 || vworld.Models[2] != models.VWorldBodyModel10 {
 		t.Fatalf("vworld_flux_image models=%v", vworld.Models)
 	}
 	if vworld.VWorldImage == nil ||

@@ -1,4 +1,4 @@
-// Package vworldimage 承接薇光点亮公网 FLUX 生图：拆衣服与虚拟换衣。
+// Package vworldimage 承接薇光点亮公网 FLUX 生图：拆衣服、虚拟换衣与体模。
 // 与 SeeTacloud 上的 FLUX.2-klein-9B OpenAI Bearer 实例分绑；鉴权、LoRA、固定尺寸，以及
 // 有 parse_mask 时的 crop.applied 验收都只在本包，调用方只传 ModelHub 模型 ID 与业务图文。
 package vworldimage
@@ -27,17 +27,20 @@ import (
 const (
 	garmentExtractionPath = "/v1/images/garment_extraction"
 	editsPath             = "/v1/images/edits"
+	bodyModelPath         = "/v1/images/body_model"
 
 	// 上游兼容字段：业务能力由路径和 lora_name 决定，不能把 VWorld 模型 ID 原样下发。
 	upstreamCompatibleModel = "FLUX.2-klein-9B"
 	loraStrength            = "1.0"
 	responseFormat          = "b64_json"
 
-	loraClothGen = "cloth_gen"
-	loraVTON     = "vton"
+	loraClothGen  = "cloth_gen"
+	loraVTON      = "vton"
+	loraBodyModel = "body_model"
 
-	garmentSize = "1024x1024"
-	vtonSize    = "768x1024"
+	garmentSize   = "1024x1024"
+	vtonSize      = "768x1024"
+	bodyModelSize = "1024x1536"
 
 	// 同步长请求；文档上限 900s，避免默认 HTTP 客户端过早切断。
 	requestTimeout = 900 * time.Second
@@ -107,7 +110,7 @@ func (p *Provider) currentBaseURL() string {
 	return next
 }
 
-// GenerateImage 按真实模型 ID 选择拆衣服或虚拟换衣；尺寸与 LoRA 固定在供应商内，不受衣橱 AspectRatio 换算影响。
+// GenerateImage 按真实模型 ID 选择拆衣服、虚拟换衣或体模；尺寸与 LoRA 固定在供应商内，不受调用方 AspectRatio 换算影响。
 func (p *Provider) GenerateImage(ctx context.Context, model string, request *modelhubv2.GenerateRequest) (*modelhubv2.GenerateEvent, error) {
 	if request == nil {
 		return nil, provider.NotAttempted(provider.ErrorInvalidArgument, "generate request is required")
@@ -117,6 +120,8 @@ func (p *Provider) GenerateImage(ctx context.Context, model string, request *mod
 		return p.generateGarmentExtraction(ctx, request)
 	case models.VWorldOutfit10:
 		return p.generateVTON(ctx, request)
+	case models.VWorldBodyModel10:
+		return p.generateBodyModel(ctx, request)
 	default:
 		return nil, provider.NotAttemptedf(provider.ErrorInvalidArgument, "vworld-image does not serve model %q", model)
 	}
@@ -227,6 +232,35 @@ func (p *Provider) generateVTON(ctx context.Context, request *modelhubv2.Generat
 		"size": vtonSize,
 	}
 	raw, err := p.doMultipart(ctx, editsPath, fields, uploads)
+	if err != nil {
+		return nil, err
+	}
+	parsed, err := decodeImageResponse(raw)
+	if err != nil {
+		return nil, err
+	}
+	return imageEvent(parsed.Data)
+}
+
+// generateBodyModel 只打体模专用路径。上游自己带提示词和 1024x1536，
+// 调用方的文字、宽高比和 image_size 都不能改写；多一张脸锚点也会被上游拒成 400。
+func (p *Provider) generateBodyModel(ctx context.Context, request *modelhubv2.GenerateRequest) (*modelhubv2.GenerateEvent, error) {
+	images := provider.ImageMedias(request.GetInput())
+	if len(images) != 1 {
+		return nil, provider.NotAttempted(provider.ErrorInvalidArgument, "VWorld_bodymodel_1.0 requires exactly one person image")
+	}
+	imageBytes, mimeType, err := inlineImage(images[0])
+	if err != nil {
+		return nil, err
+	}
+	fields := map[string]string{
+		"n":               "1",
+		"response_format": responseFormat,
+		"lora_name":       loraBodyModel,
+		"lora_strength":   loraStrength,
+		"size":            bodyModelSize,
+	}
+	raw, err := p.doMultipart(ctx, bodyModelPath, fields, []imageUpload{{data: imageBytes, mimeType: mimeType}})
 	if err != nil {
 		return nil, err
 	}
