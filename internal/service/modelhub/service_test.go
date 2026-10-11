@@ -183,6 +183,43 @@ func textRequest(model, userText string) *modelhubv2.GenerateRequest {
 	}
 }
 
+func TestServiceUsesStartedClientAfterProviderRename(t *testing.T) {
+	text := &recordingText{}
+	cfg := config.Config{
+		Logfire:  config.LogfireConfig{Token: "t", Env: "test", Service: "wg-model-hub"},
+		Database: config.DatabaseConfig{DSN: "postgres://modelhub:modelhub@127.0.0.1:5432/modelhub?sslmode=disable"},
+		Providers: map[string]config.ProviderConfig{
+			"hub_gemini": {
+				Models: []string{models.Gemini25Flash},
+				Gemini: &config.GeminiProviderConfig{APIKey: "k"},
+			},
+		},
+	}
+	live := config.NewLiveConfig(cfg)
+	service := New(live, map[string]provider.Set{"hub_gemini": {Text: text}}, nil)
+
+	next := cfg
+	next.Providers = map[string]config.ProviderConfig{
+		"gemini_api": {
+			Models: []string{models.Gemini25Flash},
+			Gemini: &config.GeminiProviderConfig{APIKey: "k"},
+		},
+	}
+	body, err := yaml.Marshal(next)
+	if err != nil {
+		t.Fatal(err)
+	}
+	live.ApplyYAML(string(body))
+
+	stream := &generateRecorder{ctx: context.Background()}
+	if err := service.Generate(textRequest(models.Gemini25Flash, "hi"), stream); err != nil {
+		t.Fatal(err)
+	}
+	if text.model != models.Gemini25Flash {
+		t.Fatalf("model=%q", text.model)
+	}
+}
+
 func TestServiceRoutesTextByRealModel(t *testing.T) {
 	text := &recordingText{}
 	service := newTestService(config.Config{

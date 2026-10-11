@@ -266,7 +266,8 @@ func (s *Service) raceBinding(model string, names []string) (binding, error) {
 	}, nil
 }
 
-// textBinding 按实例名取已启动的文本客户端，并确认当前配置仍声明这个模型。
+// textBinding 按当前配置里的实例名取已启动的文本客户端，并确认该实例仍声明这个模型。
+// 改名后客户端仍是启动时那一个，不按新名字再建连接。
 func (s *Service) textBinding(model, providerName string) (binding, error) {
 	cfg := s.live.Load()
 	providerCfg, ok := cfg.Providers[providerName]
@@ -283,7 +284,7 @@ func (s *Service) textBinding(model, providerName string) (binding, error) {
 	if !declared {
 		return binding{}, provider.Errorf(provider.ErrorConfiguration, "model %s is not declared by %s", model, providerName)
 	}
-	set, ok := s.providers[providerName]
+	set, ok := s.providerByName(providerName)
 	if !ok || set.Text == nil {
 		return binding{}, provider.Errorf(provider.ErrorConfiguration, "model %s provider %s does not support text", model, providerName)
 	}

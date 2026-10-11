@@ -493,7 +493,7 @@ func (s *Service) recordAsyncVideoDelivery(ctx context.Context, task taskstore.T
 }
 
 func (s *Service) videoProvider(providerName, model string) (provider.VideoProvider, error) {
-	set, ok := s.providers[providerName]
+	set, ok := s.providerByName(providerName)
 	if !ok || set.Video == nil {
 		return nil, provider.Errorf(provider.ErrorConfiguration, "provider %s video capability missing for model %s", providerName, model)
 	}

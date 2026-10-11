@@ -84,9 +84,10 @@ func ParseAndValidateYAML(content string) (Config, error) {
 }
 
 // RestartRequiredFields 列出绑定启动期连接/资源的字段。
-// 同名 provider 的 Models、顶层 model_routes，以及 vworld_image.base_url 可热更新。
+// 同名 provider 的 Models、顶层 model_routes、vworld_image.base_url，以及实例名可热更新。
+// 实例名只是 map 键。连接参数能和启动时的客户端一一对上时，改名不重建连接。
 // 薇光生图地址按请求读取，路演可以把公网入口切到俄亥俄内网而不重启。
-// 凭据、代理和其他供应商端点仍整单拒绝，避免配置已记下、进程还在连旧地址。
+// 增删实例、凭据、代理和其他供应商端点仍整单拒绝，避免配置已记下、进程还在连旧地址。
 func RestartRequiredFields(previous, next Config) []string {
 	var fields []string
 	if previous.Database.DSN != next.Database.DSN {
@@ -106,20 +107,77 @@ func RestartRequiredFields(previous, next Config) []string {
 
 // providerResourcesEqual 只比较启动期绑定的连接与资源参数；Models 是路由元数据，不参与重启判定。
 // vworld_image.base_url 也不参与：运行中的生图客户端每次请求都会重读它。
+// 键名本身不是连接。同名实例必须资源不变；只改名的键按资源一对一配对，配不上或两家资源相同无法分辨时拒绝。
 func providerResourcesEqual(previous, next map[string]ProviderConfig) bool {
 	if len(previous) != len(next) {
 		return false
 	}
+	var pendingPrev, pendingNext []ProviderConfig
 	for name, prev := range previous {
 		curr, ok := next[name]
 		if !ok {
-			return false
+			pendingPrev = append(pendingPrev, prev)
+			continue
 		}
 		if !providerResourceEqual(prev, curr) {
 			return false
 		}
 	}
+	for name, curr := range next {
+		if _, ok := previous[name]; !ok {
+			pendingNext = append(pendingNext, curr)
+		}
+	}
+	if len(pendingPrev) != len(pendingNext) {
+		return false
+	}
+	used := make([]bool, len(pendingNext))
+	for _, prev := range pendingPrev {
+		match := -1
+		count := 0
+		for i, curr := range pendingNext {
+			if used[i] || !providerResourceEqual(prev, curr) {
+				continue
+			}
+			count++
+			match = i
+		}
+		// 两家连接参数相同就分不清客户端该跟哪个新名字，不能热更新。
+		if count != 1 {
+			return false
+		}
+		used[match] = true
+	}
 	return true
+}
+
+// LookupStartedProvider 把当前配置里的实例名对回启动时建好的客户端键。
+// 名字没变就用原键。改名后，已经从配置消失的旧键里只接受唯一一个资源相同的。
+// 仍留在配置里的实例不参与匹配，避免和同资源的另一家抢客户端。
+func LookupStartedProvider(started, live map[string]ProviderConfig, name string) (string, bool) {
+	if _, ok := started[name]; ok {
+		return name, true
+	}
+	current, ok := live[name]
+	if !ok {
+		return "", false
+	}
+	matched := ""
+	count := 0
+	for oldName, oldCfg := range started {
+		if _, still := live[oldName]; still {
+			continue
+		}
+		if !providerResourceEqual(oldCfg, current) {
+			continue
+		}
+		count++
+		matched = oldName
+	}
+	if count != 1 {
+		return "", false
+	}
+	return matched, true
 }
 
 func providerResourceEqual(previous, next ProviderConfig) bool {
