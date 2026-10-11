@@ -583,6 +583,81 @@ func TestLedgerStreamVideoResultKeepsUsage(t *testing.T) {
 	}
 }
 
+func TestLaterVideoGetReturnsBytesWithoutRewritingArchive(t *testing.T) {
+	mem := &callledger.Memory{}
+	store := newMemoryStore()
+	video := &fakeVideo{
+		job:    provider.VideoJob{State: provider.VideoJobSucceeded},
+		result: []byte("abcde"),
+	}
+	objects := &countingObjectStore{}
+	svc := newLedgerService(config.Config{
+		Providers: map[string]config.ProviderConfig{
+			"ltx": {Models: []string{models.VWorldOutfitVideo10}, LTX: &config.LTXProviderConfig{
+				BaseURL: "https://x", Duration: 1, FPS: 1, PollInterval: 1,
+			}},
+		},
+	}, map[string]provider.Set{"ltx": {Video: video}}, store, mem)
+	svc.SetObjectStore(objects)
+	task, err := svc.SubmitGeneration(context.Background(), &modelhubv2.SubmitGenerationRequest{
+		RequestId: "req-once",
+		Request: &modelhubv2.GenerateRequest{
+			Model: models.VWorldOutfitVideo10,
+			Input: &modelhubv2.Input{Items: []*modelhubv2.InputItem{{Item: &modelhubv2.InputItem_Message{Message: &modelhubv2.Message{
+				Role:  modelhubv2.Role_ROLE_USER,
+				Parts: []*modelhubv2.ContentPart{{Content: &modelhubv2.ContentPart_Text{Text: "clip"}}},
+			}}}}},
+			Output: &modelhubv2.OutputSpec{Kind: &modelhubv2.OutputSpec_Video{Video: &modelhubv2.VideoOutput{Resolution: "720p"}}},
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := svc.GetGeneration(&modelhubv2.GetGenerationRequest{TaskId: task.GetTaskId()}, &generationStreamRecorder{ctx: context.Background()}); err != nil {
+		t.Fatal(err)
+	}
+	if objects.puts != 1 {
+		t.Fatalf("puts=%d", objects.puts)
+	}
+	if mem.Records[0].OutputPayload["object_key"] == nil || mem.Records[0].OutputPayload["bucket"] == nil {
+		t.Fatalf("first delivery missing location: %+v", mem.Records[0].OutputPayload)
+	}
+	key := mem.Records[0].OutputPayload["object_key"]
+	again := &generationStreamRecorder{ctx: context.Background()}
+	if err := svc.GetGeneration(&modelhubv2.GetGenerationRequest{TaskId: task.GetTaskId()}, again); err != nil {
+		t.Fatal(err)
+	}
+	if objects.puts != 1 {
+		t.Fatalf("later get reuploaded, puts=%d", objects.puts)
+	}
+	if mem.Records[0].OutputPayload["object_key"] != key {
+		t.Fatalf("later get changed archive: %+v", mem.Records[0].OutputPayload)
+	}
+	var replayed int
+	for _, event := range again.events {
+		if event.GetOutput() != nil {
+			replayed += len(event.GetOutput().GetItems())
+		}
+	}
+	if replayed == 0 {
+		t.Fatal("later get did not return video bytes")
+	}
+	video.readError = provider.New(provider.ErrorUnavailable, "download failed")
+	_ = svc.GetGeneration(&modelhubv2.GetGenerationRequest{TaskId: task.GetTaskId()}, &generationStreamRecorder{ctx: context.Background()})
+	if objects.puts != 1 || mem.Records[0].OutputPayload["object_key"] != key {
+		t.Fatalf("failed later get overwrote archive: puts=%d payload=%+v", objects.puts, mem.Records[0].OutputPayload)
+	}
+}
+
+type countingObjectStore struct {
+	puts int
+}
+
+func (c *countingObjectStore) Put(_ context.Context, key, _ string, _ []byte) (string, error) {
+	c.puts++
+	return "s3://bucket/" + key, nil
+}
+
 // fakeVideoWithUsage 在 ReadVideoResult 事件中附带 usage，验证异步交付补写。
 type fakeVideoWithUsage struct {
 	fakeVideo

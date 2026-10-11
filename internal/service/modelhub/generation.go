@@ -243,7 +243,8 @@ func (s *Service) GetGeneration(req *modelhubv2.GetGenerationRequest, stream mod
 		if err := stream.Send(statusEvent(modelhubv2.GenerationTaskState_GENERATION_TASK_STATE_SUCCEEDED, 0, nil)); err != nil {
 			return err
 		}
-		return s.streamVideoResult(ctx, task, stream)
+		// 任务已经成功过。这次只把视频字节再推给调用方，不再存文件，也不改账本。
+		return s.streamVideoResult(ctx, task, stream, false)
 	case taskstore.StateRunning:
 		return s.pollRunningTask(ctx, task, stream)
 	default:
@@ -329,7 +330,8 @@ func (s *Service) pollRunningTask(ctx context.Context, task taskstore.Task, stre
 			s.recordAsyncVideoDelivery(ctx, task, err, 0, "", 0, 0, nil, nil)
 			return err
 		}
-		return s.streamVideoResult(ctx, task, stream)
+		// 地址只写这一次：模型刚变为成功，并在这里完成第一次下载。
+		return s.streamVideoResult(ctx, task, stream, true)
 	default:
 		err := provider.New(provider.ErrorInvalidResponse, "unexpected video job state")
 		statusErr := provider.ToStatus(err)
@@ -338,13 +340,15 @@ func (s *Service) pollRunningTask(ctx context.Context, task taskstore.Task, stre
 	}
 }
 
-func (s *Service) streamVideoResult(ctx context.Context, task taskstore.Task, stream modelhubv2.ModelHubService_GetGenerationServer) error {
+func (s *Service) streamVideoResult(ctx context.Context, task taskstore.Task, stream modelhubv2.ModelHubService_GetGenerationServer, recordDelivery bool) error {
 	video, err := s.videoProvider(task.Provider, task.Model)
 	if err != nil {
 		statusErr := provider.ToStatus(err)
 		telemetry.RecordError(ctx, statusErr)
-		// 模型终态已固定；结果读取配置失败只记交付/结果错误。
-		s.recordAsyncVideoDelivery(ctx, task, statusErr, 0, "", 0, 0, nil, nil)
+		// 模型终态已固定；结果读取配置失败只记交付/结果错误。再次查询不写账本。
+		if recordDelivery {
+			s.recordAsyncVideoDelivery(ctx, task, statusErr, 0, "", 0, 0, nil, nil)
+		}
 		return statusErr
 	}
 	var totalBytes int64
@@ -364,8 +368,11 @@ func (s *Service) streamVideoResult(ctx context.Context, task taskstore.Task, st
 		for _, item := range event.GetItems() {
 			if media := item.GetVideo(); media != nil {
 				mimeType = media.GetMimeType()
-				if blob, ok := callledger.TakeVideoBlob(len(outBlobs), media); ok {
-					outBlobs = append(outBlobs, blob)
+				// 再次查询只转发字节。不把整段视频留在内存里准备第二次归档。
+				if recordDelivery {
+					if blob, ok := callledger.TakeVideoBlob(len(outBlobs), media); ok {
+						outBlobs = append(outBlobs, blob)
+					}
 				}
 				if data := media.GetData(); len(data) > 0 {
 					totalBytes += int64(len(data))
@@ -380,17 +387,23 @@ func (s *Service) streamVideoResult(ctx context.Context, task taskstore.Task, st
 	}
 	if err := video.ReadVideoResult(ctx, task.Model, task.ProviderTaskID, emit); err != nil {
 		if sendErr != nil {
-			s.recordAsyncVideoDelivery(ctx, task, sendErr, 1, mimeType, totalBytes, chunkCount, lastUsage, outBlobs)
+			if recordDelivery {
+				s.recordAsyncVideoDelivery(ctx, task, sendErr, 1, mimeType, totalBytes, chunkCount, lastUsage, outBlobs)
+			}
 			telemetry.RecordError(ctx, sendErr)
 			return sendErr
 		}
 		statusErr := provider.ToStatus(err)
 		telemetry.RecordError(ctx, statusErr)
-		// 下载/读结果失败不得把已确认的模型成功改成 failed。
-		s.recordAsyncVideoDelivery(ctx, task, statusErr, 0, mimeType, totalBytes, chunkCount, lastUsage, outBlobs)
+		// 下载/读结果失败不得把已确认的模型成功改成 failed。再次查询也不改已写下的地址。
+		if recordDelivery {
+			s.recordAsyncVideoDelivery(ctx, task, statusErr, 0, mimeType, totalBytes, chunkCount, lastUsage, outBlobs)
+		}
 		return statusErr
 	}
-	s.recordAsyncVideoDelivery(ctx, task, sendErr, 1, mimeType, totalBytes, chunkCount, lastUsage, outBlobs)
+	if recordDelivery {
+		s.recordAsyncVideoDelivery(ctx, task, sendErr, 1, mimeType, totalBytes, chunkCount, lastUsage, outBlobs)
+	}
 	return sendErr
 }
 
