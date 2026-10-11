@@ -99,6 +99,24 @@ func (s *Service) ledgerCallID(ctx context.Context, generationTaskID string) str
 	return id
 }
 
+// needsVideoArchive：成功任务再查时，只有账本还没有可播放 object_key 才补写归档。
+// 已有地址则保持「只回字节、不改账本」，避免覆盖或重复上传。
+func (s *Service) needsVideoArchive(ctx context.Context, generationTaskID string) bool {
+	if s == nil || generationTaskID == "" {
+		return false
+	}
+	lookup, ok := s.ledger.(callledger.GenerationOutputLookup)
+	if !ok {
+		return false
+	}
+	payload, err := lookup.OutputByGenerationTask(ctx, generationTaskID)
+	if err != nil {
+		// 没有账本行时无法定位 call_id，补归档也会被跳过。
+		return false
+	}
+	return callledger.FirstMediaKey(payload) == ""
+}
+
 // applyEventUsage 事件携带 usage 时保留最新累计值；取消/失败不得丢已返回量。
 func applyEventUsage(rec *callledger.Record, event *modelhubv2.GenerateEvent) {
 	if rec == nil || event == nil || event.GetUsage() == nil {

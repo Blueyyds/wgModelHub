@@ -243,8 +243,8 @@ func (s *Service) GetGeneration(req *modelhubv2.GetGenerationRequest, stream mod
 		if err := stream.Send(statusEvent(modelhubv2.GenerationTaskState_GENERATION_TASK_STATE_SUCCEEDED, 0, nil)); err != nil {
 			return err
 		}
-		// 任务已经成功过。这次只把视频字节再推给调用方，不再存文件，也不改账本。
-		return s.streamVideoResult(ctx, task, stream, false)
+		// 已有归档地址：只回字节。摘要-only（评测页播不了）的旧成功任务在这次下载时补写 object_key。
+		return s.streamVideoResult(ctx, task, stream, s.needsVideoArchive(ctx, task.TaskID))
 	case taskstore.StateRunning:
 		return s.pollRunningTask(ctx, task, stream)
 	default:

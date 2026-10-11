@@ -583,6 +583,68 @@ func TestLedgerStreamVideoResultKeepsUsage(t *testing.T) {
 	}
 }
 
+func TestSucceededVideoGetBackfillsMissingArchive(t *testing.T) {
+	mem := &callledger.Memory{}
+	store := newMemoryStore()
+	video := &fakeVideo{
+		job:    provider.VideoJob{State: provider.VideoJobSucceeded},
+		result: []byte("abcde"),
+	}
+	svc := newLedgerService(config.Config{
+		Providers: map[string]config.ProviderConfig{
+			"ltx": {Models: []string{models.VWorldOutfitVideo10}, LTX: &config.LTXProviderConfig{
+				BaseURL: "https://x", Duration: 1, FPS: 1, PollInterval: 1,
+			}},
+		},
+	}, map[string]provider.Set{"ltx": {Video: video}}, store, mem)
+	// 第一次下载时对象存储不可用：账本只留下摘要，评测页没有可播放地址。
+	svc.SetObjectStore(&failingObjectStore{})
+	task, err := svc.SubmitGeneration(context.Background(), &modelhubv2.SubmitGenerationRequest{
+		RequestId: "req-backfill",
+		Request: &modelhubv2.GenerateRequest{
+			Model: models.VWorldOutfitVideo10,
+			Input: &modelhubv2.Input{Items: []*modelhubv2.InputItem{{Item: &modelhubv2.InputItem_Message{Message: &modelhubv2.Message{
+				Role:  modelhubv2.Role_ROLE_USER,
+				Parts: []*modelhubv2.ContentPart{{Content: &modelhubv2.ContentPart_Text{Text: "clip"}}},
+			}}}}},
+			Output: &modelhubv2.OutputSpec{Kind: &modelhubv2.OutputSpec_Video{Video: &modelhubv2.VideoOutput{Resolution: "720p"}}},
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := svc.GetGeneration(&modelhubv2.GetGenerationRequest{TaskId: task.GetTaskId()}, &generationStreamRecorder{ctx: context.Background()}); err != nil {
+		t.Fatal(err)
+	}
+	if len(mem.Records) != 1 || callledger.FirstMediaKey(mem.Records[0].OutputPayload) != "" {
+		t.Fatalf("first delivery must stay summary-only: %+v", mem.Records)
+	}
+	objects := &countingObjectStore{}
+	svc.SetObjectStore(objects)
+	if err := svc.GetGeneration(&modelhubv2.GetGenerationRequest{TaskId: task.GetTaskId()}, &generationStreamRecorder{ctx: context.Background()}); err != nil {
+		t.Fatal(err)
+	}
+	if objects.puts != 1 {
+		t.Fatalf("missing archive must upload once, puts=%d", objects.puts)
+	}
+	if mem.Records[0].OutputPayload["object_key"] == nil {
+		t.Fatalf("later get did not backfill archive: %+v", mem.Records[0].OutputPayload)
+	}
+	key := mem.Records[0].OutputPayload["object_key"]
+	if err := svc.GetGeneration(&modelhubv2.GetGenerationRequest{TaskId: task.GetTaskId()}, &generationStreamRecorder{ctx: context.Background()}); err != nil {
+		t.Fatal(err)
+	}
+	if objects.puts != 1 || mem.Records[0].OutputPayload["object_key"] != key {
+		t.Fatalf("second get rewrote archive: puts=%d payload=%+v", objects.puts, mem.Records[0].OutputPayload)
+	}
+}
+
+type failingObjectStore struct{}
+
+func (f *failingObjectStore) Put(_ context.Context, _, _ string, _ []byte) (string, error) {
+	return "", errors.New("object store unavailable")
+}
+
 func TestLaterVideoGetReturnsBytesWithoutRewritingArchive(t *testing.T) {
 	mem := &callledger.Memory{}
 	store := newMemoryStore()

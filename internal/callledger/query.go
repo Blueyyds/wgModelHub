@@ -44,6 +44,11 @@ type GenerationCallFinder interface {
 	CallIDByGenerationTask(ctx context.Context, generationTaskID string) (string, error)
 }
 
+// GenerationOutputLookup 读取异步视频账本输出，供后续 GetGeneration 判断要不要补归档。
+type GenerationOutputLookup interface {
+	OutputByGenerationTask(ctx context.Context, generationTaskID string) (map[string]any, error)
+}
+
 func (m *Memory) List(_ context.Context, q Query) ([]Record, int, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
@@ -81,6 +86,20 @@ func (m *Memory) CallIDByGenerationTask(_ context.Context, generationTaskID stri
 	return "", ErrNotFound
 }
 
+func (m *Memory) OutputByGenerationTask(_ context.Context, generationTaskID string) (map[string]any, error) {
+	if m == nil || generationTaskID == "" {
+		return nil, ErrNotFound
+	}
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	for _, rec := range m.Records {
+		if rec.GenerationTaskID == generationTaskID {
+			return rec.OutputPayload, nil
+		}
+	}
+	return nil, ErrNotFound
+}
+
 func (p *Postgres) CallIDByGenerationTask(ctx context.Context, generationTaskID string) (string, error) {
 	if p == nil || p.client == nil || generationTaskID == "" {
 		return "", ErrNotFound
@@ -95,6 +114,22 @@ func (p *Postgres) CallIDByGenerationTask(ctx context.Context, generationTaskID 
 		return "", err
 	}
 	return row.ID, nil
+}
+
+func (p *Postgres) OutputByGenerationTask(ctx context.Context, generationTaskID string) (map[string]any, error) {
+	if p == nil || p.client == nil || generationTaskID == "" {
+		return nil, ErrNotFound
+	}
+	persistCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), persistTimeout)
+	defer cancel()
+	row, err := p.client.ModelCall.Query().Where(modelcall.GenerationTaskIDEQ(generationTaskID)).Only(persistCtx)
+	if err != nil {
+		if ent.IsNotFound(err) {
+			return nil, ErrNotFound
+		}
+		return nil, err
+	}
+	return row.OutputPayload, nil
 }
 
 func (m *Memory) Get(_ context.Context, callID string) (Record, error) {

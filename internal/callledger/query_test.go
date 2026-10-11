@@ -69,6 +69,24 @@ func TestCallIDByGenerationTask(t *testing.T) {
 	}
 }
 
+func TestOutputByGenerationTask(t *testing.T) {
+	store := &Memory{}
+	payload := BuildVideoOutputSummary(1, 9, "video/mp4", 0)
+	if err := store.Record(context.Background(), Record{CallID: "call-9", GenerationTaskID: "task-9", OutputPayload: payload}); err != nil {
+		t.Fatal(err)
+	}
+	got, err := store.OutputByGenerationTask(context.Background(), "task-9")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if FirstMediaKey(got) != "" || got["chunk_count"] != 0 {
+		t.Fatalf("payload=%v", got)
+	}
+	if _, err := store.OutputByGenerationTask(context.Background(), "missing"); !errors.Is(err, ErrNotFound) {
+		t.Fatalf("err=%v", err)
+	}
+}
+
 func TestFirstMediaKeyIgnoresUnarchived(t *testing.T) {
 	key := FirstMediaKey(map[string]any{
 		"parts": []any{
