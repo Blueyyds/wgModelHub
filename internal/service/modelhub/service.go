@@ -21,8 +21,9 @@ import (
 
 type Service struct {
 	modelhubv2.UnimplementedModelHubServiceServer
-	live        *config.LiveConfig
-	providers   map[string]provider.Set
+	live      *config.LiveConfig
+	providers map[string]provider.Set
+	// providerCfg 是启动快照。请求路径读 live；这里只在实例改名后按连接参数找回客户端。
 	providerCfg map[string]config.ProviderConfig
 	tasks       taskstore.Store
 	ledger      callledger.Store
@@ -173,7 +174,9 @@ func (s *Service) generateText(ctx context.Context, binding binding, request *mo
 	tracked := s.track(ctx, &rec, inBlobs)
 	defer s.endTrack(tracked, &rec, &providerErr, &outBlobs)
 	// 应用文本缓存策略（普通缺省开启 / endpoint-bound Ark 隐式自动）；返回实际生效遥测模式。
-	cachingMode := applyTextCachingPolicy(request, s.providerCfg[binding.provider])
+	// 实例改名后 binding.provider 是新键，类型和 endpoint 以当前配置为准，不读启动快照。
+	providerCfg, _ := s.providerConfig(binding.provider)
+	cachingMode := applyTextCachingPolicy(request, providerCfg)
 	streamMode := request.GetOutput().GetStream()
 	labels := llmmetric.Labels{Model: binding.model, Provider: binding.provider, Stream: streamMode}
 	// 文本能力已路由成功：真实供应商调用前计一次 request。
@@ -538,11 +541,11 @@ func (s *Service) resolve(model, capability string) (binding, error) {
 	if !ok {
 		return binding{}, provider.NotAttemptedf(provider.ErrorInvalidArgument, "unknown model %s", model)
 	}
-	providerCfg, ok := s.providerCfg[providerName]
+	providerCfg, ok := s.providerConfig(providerName)
 	if !ok {
 		return binding{}, provider.Errorf(provider.ErrorConfiguration, "model %s references unknown provider %s", model, providerName)
 	}
-	// providerCfg 是启动快照，只用来识别供应商类型；models 热更新不重建客户端。
+	// 连接在启动时建好。models 热更新不重建客户端；实例改名时按连接参数找回原客户端。
 	// Vertex 图片是否放行看当前请求的真实模型，不看实例列表里有没有别的生图 ID。
 	if !config.ProviderSupports(providerCfg, capability) || !config.VertexImageRequestAllowed(providerCfg, model, capability) {
 		return binding{}, provider.Errorf(
@@ -553,11 +556,45 @@ func (s *Service) resolve(model, capability string) (binding, error) {
 			capability,
 		)
 	}
-	providerSet, ok := s.providers[providerName]
+	providerSet, ok := s.providerByName(providerName)
 	if !ok {
 		return binding{}, provider.Errorf(provider.ErrorConfiguration, "model %s references unknown provider %s", model, providerName)
 	}
 	return binding{set: providerSet, model: model, provider: providerName}, nil
+}
+
+// providerConfig 读当前配置里的实例。热更新后的名字和 models 都在这里，不看启动快照。
+func (s *Service) providerConfig(name string) (config.ProviderConfig, bool) {
+	if s == nil {
+		return config.ProviderConfig{}, false
+	}
+	if s.live != nil {
+		cfg, ok := s.live.Load().Providers[name]
+		return cfg, ok
+	}
+	cfg, ok := s.providerCfg[name]
+	return cfg, ok
+}
+
+// providerByName 取已启动的客户端。
+// 配置名没变时直接命中。改名不重建连接，按连接参数找回启动键。
+// 账本里留下的旧名字仍在启动 map 里，视频回查不用跟着新名字走。
+func (s *Service) providerByName(name string) (provider.Set, bool) {
+	if s == nil {
+		return provider.Set{}, false
+	}
+	if set, ok := s.providers[name]; ok {
+		return set, true
+	}
+	if s.live == nil {
+		return provider.Set{}, false
+	}
+	started, ok := config.LookupStartedProvider(s.providerCfg, s.live.Load().Providers, name)
+	if !ok {
+		return provider.Set{}, false
+	}
+	set, ok := s.providers[started]
+	return set, ok
 }
 
 func capabilityOf(request *modelhubv2.GenerateRequest) (string, error) {

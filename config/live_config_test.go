@@ -123,6 +123,64 @@ func TestLiveConfigAppliesProviderModelsAppendDeleteReorder(t *testing.T) {
 	}
 }
 
+func TestLiveConfigAppliesProviderRename(t *testing.T) {
+	initial := validConfig()
+	lc := NewLiveConfig(initial)
+
+	// 只改实例名、连接参数不变：热更新必须生效，路由跟着新名字走。
+	renamed := cloneConfig(initial)
+	gemini := renamed.Providers["gemini"]
+	delete(renamed.Providers, "gemini")
+	renamed.Providers["gemini_api"] = gemini
+	if fields := RestartRequiredFields(initial, renamed); len(fields) != 0 {
+		t.Fatalf("rename must be hot-reloadable, fields=%v", fields)
+	}
+	lc.ApplyYAML(mustYAML(t, renamed))
+	got := lc.Load()
+	if _, ok := got.Providers["gemini"]; ok {
+		t.Fatal("old provider name must be gone")
+	}
+	if got.Providers["gemini_api"].Gemini == nil || got.Providers["gemini_api"].Gemini.APIKey != "key" {
+		t.Fatalf("renamed provider=%#v", got.Providers["gemini_api"])
+	}
+	if got.ModelRoutes()[models.Gemini25Flash] != "gemini_api" {
+		t.Fatalf("routes=%v", got.ModelRoutes())
+	}
+
+	// 改名同时换密钥仍然整单拒绝，不能只换名字、密钥还停在进程里。
+	changed := cloneConfig(got)
+	copied := *changed.Providers["gemini_api"].Gemini
+	copied.APIKey = "changed-key"
+	gemini = changed.Providers["gemini_api"]
+	gemini.Gemini = &copied
+	changed.Providers["gemini_api"] = gemini
+	lc.ApplyYAML(mustYAML(t, changed))
+	if lc.Load().Providers["gemini_api"].Gemini.APIKey != "key" {
+		t.Fatal("credential change during rename must keep previous key")
+	}
+}
+
+func TestLiveConfigRejectsAmbiguousProviderRename(t *testing.T) {
+	initial := validConfig()
+	initial.Providers["gemini_b"] = ProviderConfig{
+		Models: []string{"gemini-b-only"},
+		Gemini: &GeminiProviderConfig{APIKey: "key"},
+	}
+	if err := initial.Validate(); err != nil {
+		t.Fatal(err)
+	}
+	next := cloneConfig(initial)
+	a := next.Providers["gemini"]
+	b := next.Providers["gemini_b"]
+	delete(next.Providers, "gemini")
+	delete(next.Providers, "gemini_b")
+	next.Providers["gemini_a2"] = a
+	next.Providers["gemini_b2"] = b
+	if fields := RestartRequiredFields(initial, next); len(fields) == 0 || fields[0] != "providers" {
+		t.Fatalf("identical resources must not hot-rename, fields=%v", fields)
+	}
+}
+
 func TestLiveConfigRejectsProviderKeyAddDelete(t *testing.T) {
 	initial := validConfig()
 	lc := NewLiveConfig(initial)
