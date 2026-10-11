@@ -472,7 +472,7 @@ func (s *Service) recordAsyncVideoDelivery(ctx context.Context, task taskstore.T
 	if usage != nil {
 		rec.Usage, rec.UsageDetail = callledger.UsageFromProto(usage)
 	}
-	s.schedule(func() {
+	persist := func() {
 		// 图片归档超时是 30s。整段视频最大 200MiB，沿用那个超时会把已经下载完的文件丢掉。
 		persistCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 2*time.Minute)
 		defer cancel()
@@ -489,7 +489,13 @@ func (s *Service) recordAsyncVideoDelivery(ctx context.Context, task taskstore.T
 			}
 		}
 		callledger.BestEffort(persistCtx, s.ledger, rec)
-	})
+	}
+	// 评测 GetModelCall 补归档必须等落库结束，否则详情仍只有摘要。
+	if ledgerSync(ctx) {
+		persist()
+		return
+	}
+	s.schedule(persist)
 }
 
 func (s *Service) videoProvider(providerName, model string) (provider.VideoProvider, error) {

@@ -88,6 +88,8 @@ func (s *Service) GetModelCall(ctx context.Context, request *modelhubv2.GetModel
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "get model call: %v", err)
 	}
+	// 评测详情打开时顺带补写缺失的视频归档，否则列表只有 media_archive 摘要、播不了。
+	rec = s.ensureVideoArchiveForCall(ctx, rec)
 	input, err := payloadStruct(rec.InputPayload)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "encode input: %v", err)
