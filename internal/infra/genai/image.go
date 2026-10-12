@@ -6,17 +6,18 @@ import (
 
 	modelhubv2 "github.com/wgdl666/wgModelHub/gen/wg_model_hub/v2"
 	"github.com/wgdl666/wgModelHub/internal/provider"
-	"github.com/wgdl666/wgModelHub/models"
 	genaisdk "google.golang.org/genai"
 )
 
 // GenerateImage 走 Gemini 多模态生图；Input 中 Message.parts 顺序与 RPC 一致，响应也按供应商返回顺序展开。
 func (p *Provider) GenerateImage(ctx context.Context, model string, request *modelhubv2.GenerateRequest) (*modelhubv2.GenerateEvent, error) {
-	// 只约束 Vertex。Gemini Developer API 的同 ID 仍走自己的 client，不要求 vertexai.project。
+	// Vertex 生图一律打 locations/global，不再按模型 ID 留在 Express。
+	// Express 短路径不带 location，会按调用方区域解析；gemini-2.5-flash-image 等图片模型不在 asia-southeast1，新加坡开发会 404。
+	// 文本仍走 Express。Gemini Developer API 的 vertex 为 false，同 ID 不要求 project。
 	client := p.client
-	if p.vertex && model == models.GeminiNanoBanana21 {
+	if p.vertex {
 		if p.vertexGlobal == nil {
-			return nil, provider.NotAttempted(provider.ErrorConfiguration, "gemini-nano-banana-2.1 requires vertexai.project for locations/global")
+			return nil, provider.NotAttempted(provider.ErrorConfiguration, "vertex image requires vertexai.project for locations/global")
 		}
 		client = p.vertexGlobal
 	}

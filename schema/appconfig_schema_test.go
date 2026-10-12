@@ -125,7 +125,7 @@ func TestAppConfigSchemaContract(t *testing.T) {
 		t.Fatalf("ark.endpoint_id type=%v, want string", endpointID["type"])
 	}
 
-	// api_key 仍必填。project 可选，给 Nano Banana 2.1 的 locations/global。location 固定在代码里，不进 schema。
+	// api_key 仍必填。project 可选：文本 Express 不需要；Vertex 生图缺它会在请求时失败。location 固定 global，不进 schema。
 	vertex := mustMap(t, definitions["vertexai"])
 	assertStringSet(t, vertex["required"], "api_key")
 	vertexProps := mustMap(t, vertex["properties"])

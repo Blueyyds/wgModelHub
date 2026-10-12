@@ -125,14 +125,14 @@ type GeminiProviderConfig struct {
 
 // VertexAIProviderConfig 使用 Vertex Express API key。
 // 文本走 aiplatform.googleapis.com 的 publishers 短路径，不带 project。
-// Project 只服务 Nano Banana 2.1：该模型只在 locations/global，官方 Express 短路径会落到调用方区域。
+// Project 服务全部 Vertex 生图：这些请求打 locations/global。官方 Express 短路径会落到调用方区域。
 // SDK 不允许 APIKey 与 Project/Location 同时设置，所以 global 客户端另建，密钥仍是这把 api_key，不走 ADC。
-// Location 固定 global，不进配置。缺 project 时该模型在请求时返回配置错误，不探测。
+// Location 固定 global，不进配置。缺 project 时 Vertex 生图在请求时返回配置错误，不出站。文本仍走 Express。
 // ProxyURL 可选。国内 ACK 直连 aiplatform.googleapis.com 会 TLS 超时，需要复用环境里已有的 HTTP 代理；
 // 留空则直连，美东路演保持这条路径。
 type VertexAIProviderConfig struct {
 	APIKey string `yaml:"api_key"`
-	// Project 是 Vertex 项目编号或 ID。空表示只走 Express 短路径。
+	// Project 是 Vertex 项目编号或 ID。空表示 Vertex 生图不可用，文本仍走 Express 短路径。
 	Project string `yaml:"project"`
 	// ProxyURL 是已有 HTTP 代理。空表示直连。
 	ProxyURL string `yaml:"proxy_url"`

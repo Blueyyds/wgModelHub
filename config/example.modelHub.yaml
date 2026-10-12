@@ -40,8 +40,8 @@ providers:
     models: [gemini-2.0-flash-001]
     vertexai:
       api_key: "${VERTEX_API_KEY}"
-  # Nano Banana 2.1：request.model=gemini-nano-banana-2.1，OutputSpec.image。
-  # 该模型只在 locations/global。Express 短路径不带 project，会落到调用方区域。
+  # Vertex 生图（含 Nano Banana 2.1 与 gemini-2.5-flash-image）一律打 locations/global。
+  # Express 短路径不带 project，会落到调用方区域；图片模型不在 asia-southeast1。
   # project 必须显式配置；location 固定 global，不写在这里。密钥仍是 Express API key，不走 ADC。
   # 分辨率原样下发 1K/2K/4K。思考推荐 MINIMAL/MEDIUM/HIGH；LOW 原样下发，上游会拒绝。
   # 官方不支持 temperature；设置了会原样下发并返回上游错误。

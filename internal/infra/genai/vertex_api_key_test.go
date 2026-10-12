@@ -318,6 +318,34 @@ func inlineImageBytes(t *testing.T, body map[string]any) []byte {
 	return nil
 }
 
+func TestVertexFlashImageUsesGlobalPath(t *testing.T) {
+	clearVertexDiscoveryEnv(t)
+	out := onePixelPNG(t)
+	transport := &vertexRecordingTransport{response: `{
+		"candidates":[{"content":{"role":"model","parts":[
+			{"inlineData":{"mimeType":"image/png","data":"` + base64.StdEncoding.EncodeToString(out) + `"}}
+		]},"finishReason":"STOP"}]
+	}`}
+	p, err := newVertexAI(context.Background(), "vertex", vertexTestAPIKey, "123", &http.Client{Transport: transport})
+	if err != nil {
+		t.Fatalf("newVertexAI: %v", err)
+	}
+	if _, err := p.GenerateImage(context.Background(), models.Gemini25FlashImage, vertexImageRequest("blazer")); err != nil {
+		t.Fatalf("GenerateImage: %v", err)
+	}
+	if transport.calls != 1 || transport.last == nil {
+		t.Fatalf("calls=%d", transport.calls)
+	}
+	path := transport.last.URL.EscapedPath()
+	want := "/projects/123/locations/global/publishers/google/models/" + models.Gemini25FlashImage + ":generateContent"
+	if !strings.Contains(path, want) {
+		t.Fatalf("path=%q", path)
+	}
+	if strings.Contains(path, "us-central1") || strings.Contains(path, "asia-southeast1") || strings.Contains(path, "should-not-appear-in-path") {
+		t.Fatalf("path=%q", path)
+	}
+}
+
 func TestVertexTextKeepsExpressPathWhenProjectConfigured(t *testing.T) {
 	clearVertexDiscoveryEnv(t)
 	transport := &vertexRecordingTransport{}
@@ -346,6 +374,8 @@ func TestNanoBananaImageWithoutProjectMakesNoCall(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 	_, err = p.GenerateImage(ctx, models.GeminiNanoBanana21, vertexImageRequest("square"))
+	assertVertexProjectConfigError(t, err)
+	_, err = p.GenerateImage(ctx, models.Gemini25FlashImage, vertexImageRequest("blazer"))
 	assertVertexProjectConfigError(t, err)
 	if transport.calls != 0 {
 		t.Fatalf("calls=%d", transport.calls)

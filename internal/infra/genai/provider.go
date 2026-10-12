@@ -25,7 +25,7 @@ type Provider struct {
 	client *genaisdk.Client
 	// vertex 区分 Vertex Express 与 Gemini Developer API。后者同模型 ID 不得改走 Vertex global。
 	vertex bool
-	// vertexGlobal 只在配置了 vertexai.project 时于初始化创建。文本继续用 client 的 Express 短路径。
+	// vertexGlobal 只在配置了 vertexai.project 时于初始化创建。Vertex 生图用它；文本继续用 client 的 Express 短路径。
 	vertexGlobal *genaisdk.Client
 }
 
@@ -103,8 +103,8 @@ func newVertexAI(ctx context.Context, name, apiKey, project string, httpClient *
 	return result, nil
 }
 
-// newGlobalVertexClient 把 Nano Banana 2.1 固定打到 projects/{project}/locations/global。
-// 官方 Express 短路径不带 project，线上会按调用方区域解析；该模型只在 global。
+// newGlobalVertexClient 把 Vertex 生图固定打到 projects/{project}/locations/global。
+// 官方 Express 短路径不带 project，线上会按调用方区域解析；图片模型不在该区域时会 404。
 func newGlobalVertexClient(ctx context.Context, name, project, apiKey string, httpClient *http.Client) (*genaisdk.Client, error) {
 	wrapped := *httpClient
 	wrapped.Transport = &vertexAPIKeyTransport{base: httpClient.Transport, key: apiKey}
