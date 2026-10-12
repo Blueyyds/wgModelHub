@@ -2,16 +2,12 @@ package modelhub
 
 import (
 	"context"
-	"log/slog"
-	"strings"
 	"time"
 
 	"github.com/google/uuid"
 	modelhubv2 "github.com/wgdl666/wgModelHub/gen/wg_model_hub/v2"
 	"github.com/wgdl666/wgModelHub/internal/callledger"
 	"github.com/wgdl666/wgModelHub/internal/provider"
-	"github.com/wgdl666/wgModelHub/internal/taskstore"
-	"google.golang.org/grpc"
 )
 
 func (s *Service) shouldRecord(err error) bool {
@@ -119,60 +115,6 @@ func (s *Service) needsVideoArchive(ctx context.Context, generationTaskID string
 		return false
 	}
 	return callledger.FirstMediaKey(payload) == ""
-}
-
-type ledgerSyncKey struct{}
-
-// withLedgerSync 让随后的视频交付落库同步执行，供评测详情补归档等待 object_key。
-func withLedgerSync(ctx context.Context) context.Context {
-	return context.WithValue(ctx, ledgerSyncKey{}, true)
-}
-
-func ledgerSync(ctx context.Context) bool {
-	v, _ := ctx.Value(ledgerSyncKey{}).(bool)
-	return v
-}
-
-// discardGenerationStream 评测补归档只消费上游字节，不向调用方推流。
-type discardGenerationStream struct {
-	grpc.ServerStream
-	ctx context.Context
-}
-
-func (d discardGenerationStream) Context() context.Context { return d.ctx }
-
-func (d discardGenerationStream) Send(*modelhubv2.GenerationTaskEvent) error { return nil }
-
-// ensureVideoArchiveForCall：评测打开详情时，摘要-only 的成功视频再下一次并补写可播放地址。
-// 上游已过期或对象存储不可用时保持原文，不把 GetModelCall 打成错误。
-func (s *Service) ensureVideoArchiveForCall(ctx context.Context, rec callledger.Record) callledger.Record {
-	if s == nil || s.tasks == nil {
-		return rec
-	}
-	if rec.Capability != callledger.CapabilityVideo || callledger.FirstMediaKey(rec.OutputPayload) != "" {
-		return rec
-	}
-	taskID := strings.TrimSpace(rec.GenerationTaskID)
-	if taskID == "" || !s.needsVideoArchive(ctx, taskID) {
-		return rec
-	}
-	task, err := s.tasks.GetByTaskID(ctx, taskID)
-	if err != nil || task.State != taskstore.StateSucceeded {
-		return rec
-	}
-	syncCtx := withLedgerSync(ctx)
-	if err := s.streamVideoResult(syncCtx, task, discardGenerationStream{ctx: syncCtx}, true); err != nil {
-		slog.Warn("model_call video archive ensure failed", "generation_task_id", taskID, "call_id", rec.CallID, "err", err)
-	}
-	reader, err := s.callReader()
-	if err != nil {
-		return rec
-	}
-	refreshed, err := reader.Get(ctx, rec.CallID)
-	if err != nil {
-		return rec
-	}
-	return refreshed
 }
 
 // applyEventUsage 事件携带 usage 时保留最新累计值；取消/失败不得丢已返回量。

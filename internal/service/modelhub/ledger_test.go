@@ -639,56 +639,6 @@ func TestSucceededVideoGetBackfillsMissingArchive(t *testing.T) {
 	}
 }
 
-func TestGetModelCallEnsuresMissingVideoArchive(t *testing.T) {
-	mem := &callledger.Memory{}
-	store := newMemoryStore()
-	video := &fakeVideo{
-		job:    provider.VideoJob{State: provider.VideoJobSucceeded},
-		result: []byte("abcde"),
-	}
-	svc := newLedgerService(config.Config{
-		Providers: map[string]config.ProviderConfig{
-			"ltx": {Models: []string{models.VWorldOutfitVideo10}, LTX: &config.LTXProviderConfig{
-				BaseURL: "https://x", Duration: 1, FPS: 1, PollInterval: 1,
-			}},
-		},
-	}, map[string]provider.Set{"ltx": {Video: video}}, store, mem)
-	svc.SetObjectStore(&failingObjectStore{})
-	task, err := svc.SubmitGeneration(context.Background(), &modelhubv2.SubmitGenerationRequest{
-		RequestId: "req-eval-ensure",
-		Request: &modelhubv2.GenerateRequest{
-			Model: models.VWorldOutfitVideo10,
-			Input: &modelhubv2.Input{Items: []*modelhubv2.InputItem{{Item: &modelhubv2.InputItem_Message{Message: &modelhubv2.Message{
-				Role:  modelhubv2.Role_ROLE_USER,
-				Parts: []*modelhubv2.ContentPart{{Content: &modelhubv2.ContentPart_Text{Text: "clip"}}},
-			}}}}},
-			Output: &modelhubv2.OutputSpec{Kind: &modelhubv2.OutputSpec_Video{Video: &modelhubv2.VideoOutput{Resolution: "720p"}}},
-		},
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if err := svc.GetGeneration(&modelhubv2.GetGenerationRequest{TaskId: task.GetTaskId()}, &generationStreamRecorder{ctx: context.Background()}); err != nil {
-		t.Fatal(err)
-	}
-	callID := mem.Records[0].CallID
-	if callledger.FirstMediaKey(mem.Records[0].OutputPayload) != "" {
-		t.Fatalf("setup want summary-only: %+v", mem.Records[0].OutputPayload)
-	}
-	objects := &countingObjectStore{}
-	svc.SetObjectStore(objects)
-	detail, err := svc.GetModelCall(context.Background(), &modelhubv2.GetModelCallRequest{CallId: callID})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if objects.puts != 1 {
-		t.Fatalf("GetModelCall must archive once, puts=%d", objects.puts)
-	}
-	if detail.GetSummary().GetOutputMediaKey() == "" {
-		t.Fatalf("detail missing output media key: %+v", detail.GetSummary())
-	}
-}
-
 type failingObjectStore struct{}
 
 func (f *failingObjectStore) Put(_ context.Context, _, _ string, _ []byte) (string, error) {
