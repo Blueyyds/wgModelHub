@@ -62,6 +62,10 @@ func (p *Provider) SubmitVideo(ctx context.Context, model string, request *model
 	if request == nil {
 		return "", provider.NotAttempted(provider.ErrorInvalidArgument, "video request is required")
 	}
+	motionTips, err := videoMotionTips(request.GetInput().GetModelTraits())
+	if err != nil {
+		return "", err
+	}
 	firstFrame := provider.FirstImageMedia(request.GetInput())
 	imageBytes, err := p.loadFirstFrame(ctx, firstFrame)
 	if err != nil {
@@ -71,7 +75,28 @@ func (p *Provider) SubmitVideo(ctx context.Context, model string, request *model
 	if video := request.GetOutput().GetVideo(); video != nil {
 		resolution = video.GetResolution()
 	}
-	return p.submit(ctx, upstreamLTXModel, imageBytes, provider.JoinedText(request.GetInput()), resolution, request.GetOutput().GetVideo())
+	return p.submit(ctx, upstreamLTXModel, imageBytes, provider.JoinedText(request.GetInput()), resolution, motionTips, request.GetOutput().GetVideo())
+}
+
+// videoMotionTips 只读取该模型认识的独立动作参数；缺省时保持旧调用行为。
+func videoMotionTips(raw string) (string, error) {
+	raw = strings.TrimSpace(raw)
+	if raw == "" {
+		return "", nil
+	}
+	var traits map[string]json.RawMessage
+	if json.Unmarshal([]byte(raw), &traits) != nil || traits == nil {
+		return "", provider.NotAttempted(provider.ErrorInvalidArgument, "video model_traits must be a JSON object with string motion_tips")
+	}
+	value, exists := traits["motion_tips"]
+	if !exists {
+		return "", nil
+	}
+	var motionTips string
+	if bytes.Equal(bytes.TrimSpace(value), []byte("null")) || json.Unmarshal(value, &motionTips) != nil {
+		return "", provider.NotAttempted(provider.ErrorInvalidArgument, "video model_traits.motion_tips must be a string")
+	}
+	return strings.TrimSpace(motionTips), nil
 }
 
 // GetVideo 单次查询 /jobs/{id}；done/error/进行中分别映射为 Succeeded/Failed/Running。
@@ -172,7 +197,7 @@ func (p *Provider) loadFirstFrame(ctx context.Context, media *modelhubv2.Media) 
 	}
 }
 
-func (p *Provider) submit(ctx context.Context, model string, imageBytes []byte, prompt, resolution string, video *modelhubv2.VideoOutput) (string, error) {
+func (p *Provider) submit(ctx context.Context, model string, imageBytes []byte, prompt, resolution, motionTips string, video *modelhubv2.VideoOutput) (string, error) {
 	var body bytes.Buffer
 	writer := multipart.NewWriter(&body)
 	imagePart, err := writer.CreateFormFile("image", "first_frame.png")
@@ -201,6 +226,9 @@ func (p *Provider) submit(ctx context.Context, model string, imageBytes []byte, 
 		"fps":        fmt.Sprintf("%d", fps),
 		"seed":       fmt.Sprintf("%d", seed),
 		"model":      model,
+	}
+	if motionTips != "" {
+		fields["motion_tips"] = motionTips
 	}
 	for name, value := range fields {
 		if err := writer.WriteField(name, value); err != nil {

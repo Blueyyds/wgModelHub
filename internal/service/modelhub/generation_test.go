@@ -303,6 +303,26 @@ func TestSubmitGenerationConflictDifferentHash(t *testing.T) {
 	}
 }
 
+func TestSubmitGenerationMotionTipsParticipateInIdempotency(t *testing.T) {
+	video := &fakeVideo{job: provider.VideoJob{State: provider.VideoJobRunning, PollAfterMs: 1000}}
+	service := videoService(video, newMemoryStore())
+	ctx := metadata.NewIncomingContext(context.Background(), metadata.Pairs(protocol.CallerMetadataKey, "wg-wardrobe"))
+	req := videoSubmitRequest(models.VWorldOutfitVideo10, "motion-request")
+	req.Request.Input.ModelTraits = `{"motion_tips":"slow weight shift"}`
+	first, err := service.SubmitGeneration(ctx, req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	replay, err := service.SubmitGeneration(ctx, req)
+	if err != nil || replay.GetTaskId() != first.GetTaskId() {
+		t.Fatalf("same motion request must reuse task: replay=%v err=%v", replay, err)
+	}
+	req.Request.Input.ModelTraits = `{"motion_tips":"slow 30 degree turn"}`
+	if _, err := service.SubmitGeneration(ctx, req); status.Code(err) != codes.AlreadyExists {
+		t.Fatalf("changed motion reused request ID: %v", err)
+	}
+}
+
 func TestSubmitUncertainOutcomeMarksFailedNoRetry(t *testing.T) {
 	video := &fakeVideo{submitErr: provider.New(provider.ErrorTimeout, "upstream timed out")}
 	store := newMemoryStore()
