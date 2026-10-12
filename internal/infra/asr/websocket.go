@@ -15,6 +15,7 @@ import (
 	"github.com/wgdl666/kangaroo/logs"
 
 	modelhubv2 "github.com/wgdl666/wgModelHub/gen/wg_model_hub/v2"
+	"github.com/wgdl666/wgModelHub/internal/infra/asrmetric"
 	"github.com/wgdl666/wgModelHub/internal/provider"
 )
 
@@ -181,16 +182,20 @@ func (s *webSocketSession) write(messageType int, payload []byte) error {
 
 func (s *webSocketSession) readLoop() {
 	defer close(s.errs)
+	// counted 保证同一次拒绝只打一个点：Error 帧先到，后面的关闭帧不再计。
+	counted := false
 	for {
 		messageType, payload, err := s.conn.ReadMessage()
 		if err != nil {
 			if s.ctx.Err() == nil && !websocket.IsCloseError(err, websocket.CloseNormalClosure, websocket.CloseGoingAway) {
+				s.noteSessionFailure(err, &counted)
 				s.report(provider.Wrap(provider.ErrorUnavailable, s.name+" websocket read failed", err))
 			}
 			return
 		}
 		transcripts, err := s.dialect.Parse(messageType, payload)
 		if err != nil {
+			s.noteSessionFailure(err, &counted)
 			s.report(provider.Wrap(provider.ErrorInvalidResponse, s.name+" response parse failed", err))
 			return
 		}
@@ -204,6 +209,18 @@ func (s *webSocketSession) readLoop() {
 			}
 		}
 	}
+}
+
+func (s *webSocketSession) noteSessionFailure(err error, counted *bool) {
+	if counted == nil || *counted {
+		return
+	}
+	code, ok := FailureCode(err)
+	if !ok {
+		return
+	}
+	*counted = true
+	asrmetric.Record(s.ctx, s.name, code)
 }
 
 func (s *webSocketSession) report(err error) {

@@ -1,6 +1,7 @@
 package assemblyai
 
 import (
+	"bytes"
 	"encoding/json"
 	"net/http"
 	"net/url"
@@ -77,12 +78,14 @@ func New(cfg Config) (provider.ASRProvider, error) {
 
 func parse(_ int, payload []byte) ([]*modelhubv2.TranscribeSpeechTranscript, error) {
 	var event struct {
-		Type            string  `json:"type"`
-		Transcript      string  `json:"transcript"`
-		EndOfTurn       bool    `json:"end_of_turn"`
-		TurnIsFormatted bool    `json:"turn_is_formatted"`
-		SpeakerLabel    string  `json:"speaker_label"`
-		Confidence      float64 `json:"end_of_turn_confidence"`
+		Type            string   `json:"type"`
+		Transcript      string   `json:"transcript"`
+		EndOfTurn       bool     `json:"end_of_turn"`
+		TurnIsFormatted bool     `json:"turn_is_formatted"`
+		SpeakerLabel    string   `json:"speaker_label"`
+		Confidence      float64  `json:"end_of_turn_confidence"`
+		ErrorCode       jsonCode `json:"error_code"`
+		ErrorText       string   `json:"error"`
 		Words           []struct {
 			Start float64 `json:"start"`
 			End   float64 `json:"end"`
@@ -90,6 +93,14 @@ func parse(_ int, payload []byte) ([]*modelhubv2.TranscribeSpeechTranscript, err
 	}
 	if err := common.ParseJSON(payload, &event); err != nil {
 		return nil, err
+	}
+	// 账号类拒绝先发 Error 再关连接，关闭原因经常只是占位句。丢掉这帧就只剩 1008，告警看不到码。
+	if event.Type == "Error" {
+		code := strings.TrimSpace(string(event.ErrorCode))
+		if code == "" || code == "0" {
+			code = "unknown"
+		}
+		return nil, &common.SessionFailure{Code: code, Reason: strings.TrimSpace(event.ErrorText)}
 	}
 	if event.Type != "Turn" || strings.TrimSpace(event.Transcript) == "" {
 		return nil, nil
@@ -106,4 +117,24 @@ func parse(_ int, payload []byte) ([]*modelhubv2.TranscribeSpeechTranscript, err
 		out.MediaEndMs = int64(event.Words[len(event.Words)-1].End)
 	}
 	return []*modelhubv2.TranscribeSpeechTranscript{out}, nil
+}
+
+// jsonCode 同时接受 "1008" 和 1008。厂家把数字码写成数字时，按字符串解会整帧失败。
+type jsonCode string
+
+func (c *jsonCode) UnmarshalJSON(b []byte) error {
+	b = bytes.TrimSpace(b)
+	if len(b) == 0 || string(b) == "null" {
+		return nil
+	}
+	if b[0] == '"' {
+		var s string
+		if err := json.Unmarshal(b, &s); err != nil {
+			return err
+		}
+		*c = jsonCode(s)
+		return nil
+	}
+	*c = jsonCode(b)
+	return nil
 }
