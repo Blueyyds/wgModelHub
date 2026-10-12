@@ -244,10 +244,15 @@ func (p *Provider) generateVTON(ctx context.Context, request *modelhubv2.Generat
 
 // generateBodyModel 只打体模专用路径。上游自己带提示词和 1024x1536，
 // 调用方的文字、宽高比和 image_size 都不能改写；多一张脸锚点也会被上游拒成 400。
+// 性别来自 Input.model_traits 的 JSON，不读文本 part；非法值在出站前失败。
 func (p *Provider) generateBodyModel(ctx context.Context, request *modelhubv2.GenerateRequest) (*modelhubv2.GenerateEvent, error) {
 	images := provider.ImageMedias(request.GetInput())
 	if len(images) != 1 {
 		return nil, provider.NotAttempted(provider.ErrorInvalidArgument, "VWorld_bodymodel_1.0 requires exactly one person image")
+	}
+	gender, err := bodyModelGender(request.GetInput().GetModelTraits())
+	if err != nil {
+		return nil, err
 	}
 	imageBytes, mimeType, err := inlineImage(images[0])
 	if err != nil {
@@ -259,6 +264,7 @@ func (p *Provider) generateBodyModel(ctx context.Context, request *modelhubv2.Ge
 		"lora_name":       loraBodyModel,
 		"lora_strength":   loraStrength,
 		"size":            bodyModelSize,
+		"gender":          gender,
 	}
 	raw, err := p.doMultipart(ctx, bodyModelPath, fields, []imageUpload{{data: imageBytes, mimeType: mimeType}})
 	if err != nil {
@@ -269,6 +275,26 @@ func (p *Provider) generateBodyModel(ctx context.Context, request *modelhubv2.Ge
 		return nil, err
 	}
 	return imageEvent(parsed.Data)
+}
+
+// bodyModelGender 只认 model_traits 这份 JSON 里的 gender。
+// 字段是抽象的模型特性袋，其他键留给别的模型；体模不认识的键忽略，缺 gender 或值不是 male/female 则不出站。
+func bodyModelGender(raw string) (string, error) {
+	raw = strings.TrimSpace(raw)
+	if raw == "" {
+		return "", provider.NotAttempted(provider.ErrorInvalidArgument, "VWorld_bodymodel_1.0 requires model_traits.gender")
+	}
+	var traits struct {
+		Gender string `json:"gender"`
+	}
+	if err := json.Unmarshal([]byte(raw), &traits); err != nil {
+		return "", provider.NotAttempted(provider.ErrorInvalidArgument, "VWorld_bodymodel_1.0 model_traits must be a JSON object")
+	}
+	gender := strings.ToLower(strings.TrimSpace(traits.Gender))
+	if gender != "male" && gender != "female" {
+		return "", provider.NotAttempted(provider.ErrorInvalidArgument, "VWorld_bodymodel_1.0 model_traits.gender must be male or female")
+	}
+	return gender, nil
 }
 
 type imageUpload struct {

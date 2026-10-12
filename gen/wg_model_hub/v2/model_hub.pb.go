@@ -1442,6 +1442,9 @@ type Input struct {
 	// Gemini 显式 CachedContent 资源名；与 Ark previous_response_id / caching.enabled 互不替代。
 	// 引用时 system/tools 已在 cache 内，调用方不应再按屏裁剪 tools，也不应重复下发 system。
 	CachedContent string `protobuf:"bytes,6,opt,name=cached_content,json=cachedContent,proto3" json:"cached_content,omitempty"`
+	// 模型特性。JSON 字符串，不是提示词，也不进文本 part。
+	// 各模型只读自己认识的键。体模读 gender，只允许 male、female。
+	ModelTraits   string `protobuf:"bytes,7,opt,name=model_traits,json=modelTraits,proto3" json:"model_traits,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1514,6 +1517,13 @@ func (x *Input) GetCaching() *CachingConfig {
 func (x *Input) GetCachedContent() string {
 	if x != nil {
 		return x.CachedContent
+	}
+	return ""
+}
+
+func (x *Input) GetModelTraits() string {
+	if x != nil {
+		return x.ModelTraits
 	}
 	return ""
 }
@@ -4248,7 +4258,7 @@ const file_proto_wg_model_hub_v2_model_hub_proto_rawDesc = "" +
 	"\amessage\x18\x01 \x01(\v2\x18.wg_model_hub.v2.MessageH\x00R\amessage\x12>\n" +
 	"\vtool_output\x18\x02 \x01(\v2\x1b.wg_model_hub.v2.ToolOutputH\x00R\n" +
 	"toolOutputB\x06\n" +
-	"\x04item\"\xb7\x02\n" +
+	"\x04item\"\xda\x02\n" +
 	"\x05Input\x120\n" +
 	"\x05items\x18\x01 \x03(\v2\x1a.wg_model_hub.v2.InputItemR\x05items\x12+\n" +
 	"\x05tools\x18\x02 \x03(\v2\x15.wg_model_hub.v2.ToolR\x05tools\x12<\n" +
@@ -4256,7 +4266,8 @@ const file_proto_wg_model_hub_v2_model_hub_proto_rawDesc = "" +
 	"toolChoice\x120\n" +
 	"\x14previous_response_id\x18\x04 \x01(\tR\x12previousResponseId\x128\n" +
 	"\acaching\x18\x05 \x01(\v2\x1e.wg_model_hub.v2.CachingConfigR\acaching\x12%\n" +
-	"\x0ecached_content\x18\x06 \x01(\tR\rcachedContent\"\xa2\x02\n" +
+	"\x0ecached_content\x18\x06 \x01(\tR\rcachedContent\x12!\n" +
+	"\fmodel_traits\x18\a \x01(\tR\vmodelTraits\"\xa2\x02\n" +
 	"\x1aCreateCachedContentRequest\x12\x14\n" +
 	"\x05model\x18\x01 \x01(\tR\x05model\x12-\n" +
 	"\x12system_instruction\x18\x02 \x01(\tR\x11systemInstruction\x12+\n" +

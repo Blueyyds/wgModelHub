@@ -344,7 +344,7 @@ func TestBodyModelContract(t *testing.T) {
 		if r.FormValue("lora_name") != loraBodyModel || r.FormValue("lora_strength") != loraStrength {
 			t.Fatalf("lora = %q/%q", r.FormValue("lora_name"), r.FormValue("lora_strength"))
 		}
-		if r.FormValue("size") != bodyModelSize || r.FormValue("response_format") != responseFormat || r.FormValue("n") != "1" {
+		if r.FormValue("size") != bodyModelSize || r.FormValue("response_format") != responseFormat || r.FormValue("n") != "1" || r.FormValue("gender") != "female" {
 			t.Fatalf("form = %#v", r.Form)
 		}
 		if r.FormValue("size") == vtonSize {
@@ -378,6 +378,7 @@ func TestBodyModelContract(t *testing.T) {
 		t.Fatal("two images must be rejected before HTTP")
 	}
 	req := wardrobeRequest(person, "caller prompt must be dropped")
+	req.Input.ModelTraits = `{"gender":"female","unused":"later"}`
 	req.Output = &modelhubv2.OutputSpec{Kind: &modelhubv2.OutputSpec_Image{Image: &modelhubv2.ImageOutput{
 		AspectRatio: strPtr("3:4"),
 		ImageSize:   strPtr("2K"),
@@ -412,6 +413,9 @@ func TestRejectsWrongImageCountsAndUnknownModel(t *testing.T) {
 	}
 	if _, err := p.GenerateImage(context.Background(), models.VWorldBodyModel10, &modelhubv2.GenerateRequest{}); err == nil {
 		t.Fatal("expected body model missing image error")
+	}
+	if _, err := p.GenerateImage(context.Background(), models.VWorldBodyModel10, wardrobeRequest(pngData, "prompt")); err == nil {
+		t.Fatal("expected body model missing gender error")
 	}
 }
 
