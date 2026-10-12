@@ -12,6 +12,7 @@ import (
 
 	"github.com/wgdl666/kangaroo/logs"
 	"github.com/wgdl666/wgModelHub/config"
+	"github.com/wgdl666/wgModelHub/internal/infra/asrmetric"
 	"github.com/wgdl666/wgModelHub/internal/infra/channelmetric"
 	"github.com/wgdl666/wgModelHub/internal/infra/llmmetric"
 	"github.com/wgdl666/wgModelHub/internal/infra/metricserver"
@@ -75,6 +76,11 @@ func Setup(ctx context.Context, cfg config.LogfireConfig) (*Runtime, error) {
 		_ = metricProvider.Shutdown(ctx)
 		_ = shared.Shutdown(ctx)
 		return nil, fmt.Errorf("configure llm metrics: %w", err)
+	}
+	if err := asrmetric.Configure(metricProvider.Meter(serviceName)); err != nil {
+		_ = metricProvider.Shutdown(ctx)
+		_ = shared.Shutdown(ctx)
+		return nil, fmt.Errorf("configure asr metrics: %w", err)
 	}
 	channels, err := channelmetric.New(promReader.Registerer())
 	if err != nil {
