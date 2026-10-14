@@ -84,6 +84,8 @@ type ProviderConfig struct {
 	VWorldImage *VWorldImageProviderConfig `yaml:"vworld_image"`
 	// HumanYOLO 承接自建人体检测。和 Rekognition、人体解析分实例。
 	HumanYOLO *HumanYOLOProviderConfig `yaml:"human_yolo"`
+	ClothYOLO *ClothYOLOProviderConfig `yaml:"cloth_yolo"`
+	FaceSim   *FaceSimProviderConfig   `yaml:"facesim"`
 	// HumanParser 承接人体解析，输出分割 JSON 而不是检测框。
 	// 同一结构服务两个 ID：human-parser 走旧 /predict，human_parse 走 G7 /human_parser/predict。
 	HumanParser *HumanParserProviderConfig `yaml:"human_parser"`
@@ -279,10 +281,12 @@ type PhotoroomProviderConfig struct {
 // SegmentPersonProviderConfig 承接国内自建抠图。
 // base_url / method / Basic Auth 只在 ModelHub；人物与商品主体靠 models 里的两个真实 ID 区分。
 type SegmentPersonProviderConfig struct {
-	BaseURL  string `yaml:"base_url"`
-	Username string `yaml:"username"`
-	Password string `yaml:"password"`
-	Method   string `yaml:"method"`
+	BaseURL       string `yaml:"base_url"`
+	Username      string `yaml:"username"`
+	Password      string `yaml:"password"`
+	Method        string `yaml:"method"`
+	PersonMethod  string `yaml:"person_method"`
+	SubjectMethod string `yaml:"subject_method"`
 }
 
 // VWorldImageProviderConfig 承接薇光点亮公网生图入口。
@@ -300,8 +304,19 @@ type HumanYOLOProviderConfig struct {
 	Password string `yaml:"password"`
 }
 
+type ClothYOLOProviderConfig struct {
+	BaseURL  string `yaml:"base_url"`
+	Username string `yaml:"username"`
+	Password string `yaml:"password"`
+}
+type FaceSimProviderConfig struct {
+	BaseURL  string `yaml:"base_url"`
+	Username string `yaml:"username"`
+	Password string `yaml:"password"`
+}
+
 // HumanParserProviderConfig 是人体解析地址。账号密码成对，两个都空则匿名。
-// G7 只靠网络 ACL，路演应把账号密码留空；不要把 G7 地址写进国内或新加坡配置。
+// 无鉴权的私网服务应把账号密码留空；配置前确认部署环境可达。
 type HumanParserProviderConfig struct {
 	BaseURL  string `yaml:"base_url"`
 	Username string `yaml:"username"`
@@ -935,7 +950,7 @@ func validateProvider(name string, provider ProviderConfig) error {
 		}
 	case provider.SegmentPerson != nil:
 		segment := provider.SegmentPerson
-		if strings.TrimSpace(segment.BaseURL) == "" || strings.TrimSpace(segment.Method) == "" {
+		if strings.TrimSpace(segment.BaseURL) == "" || (strings.TrimSpace(segment.Method) == "" && (strings.TrimSpace(segment.PersonMethod) == "" || strings.TrimSpace(segment.SubjectMethod) == "")) {
 			return fmt.Errorf("provider %s segment_person base_url and method are required", name)
 		}
 		if (strings.TrimSpace(segment.Username) == "") != (strings.TrimSpace(segment.Password) == "") {
@@ -948,9 +963,15 @@ func validateProvider(name string, provider ProviderConfig) error {
 		}
 	case provider.HumanYOLO != nil:
 		yolo := provider.HumanYOLO
-		if strings.TrimSpace(yolo.BaseURL) == "" || strings.TrimSpace(yolo.Username) == "" || strings.TrimSpace(yolo.Password) == "" {
-			return fmt.Errorf("provider %s human_yolo base_url, username and password are required", name)
+		if err := validateVisionHTTP(name, "human_yolo", yolo.BaseURL, yolo.Username, yolo.Password); err != nil {
+			return err
 		}
+	case provider.ClothYOLO != nil:
+		c := provider.ClothYOLO
+		return validateVisionHTTP(name, "cloth_yolo", c.BaseURL, c.Username, c.Password)
+	case provider.FaceSim != nil:
+		c := provider.FaceSim
+		return validateVisionHTTP(name, "facesim", c.BaseURL, c.Username, c.Password)
 	case provider.HumanParser != nil:
 		parser := provider.HumanParser
 		if strings.TrimSpace(parser.BaseURL) == "" {
@@ -1119,6 +1140,12 @@ func countConcreteProviders(provider ProviderConfig) int {
 	if provider.HumanYOLO != nil {
 		n++
 	}
+	if provider.ClothYOLO != nil {
+		n++
+	}
+	if provider.FaceSim != nil {
+		n++
+	}
 	if provider.HumanParser != nil {
 		n++
 	}
@@ -1208,6 +1235,17 @@ func validateElevenLabsVoiceSettings(name string, cfg *ElevenLabsTTSProviderConf
 	return nil
 }
 
+// validateVisionHTTP 允许内网匿名，公网用户名密码仍必须成对。
+func validateVisionHTTP(name, kind, base, user, password string) error {
+	if strings.TrimSpace(base) == "" {
+		return fmt.Errorf("provider %s %s base_url is required", name, kind)
+	}
+	if (strings.TrimSpace(user) == "") != (strings.TrimSpace(password) == "") {
+		return fmt.Errorf("provider %s %s username and password must be configured together", name, kind)
+	}
+	return nil
+}
+
 // ProviderSupports 根据供应商类型判断能力；ASR/Speech 是专用 RPC，不经过 Generate OutputSpec。
 func ProviderSupports(provider ProviderConfig, capability string) bool {
 	switch {
@@ -1215,7 +1253,7 @@ func ProviderSupports(provider ProviderConfig, capability string) bool {
 		return capability == CapabilityText || capability == CapabilityImage
 	case provider.ImageSeg != nil, provider.Photoroom != nil, provider.SegmentPerson != nil, provider.VWorldImage != nil:
 		return capability == CapabilityImage
-	case provider.Fashion != nil, provider.HumanYOLO != nil, provider.HumanParser != nil, provider.RekognitionDetect != nil, provider.FacebodyCompare != nil, provider.RekognitionCompare != nil, provider.DashScopeEmbedding != nil, provider.CohereEmbedding != nil, provider.BedrockEmbedding != nil, provider.DashScopeRerank != nil, provider.BedrockRerank != nil, provider.CohereRerank != nil, provider.MixedbreadRerank != nil, provider.FacebodyDetect != nil, provider.FacebodyLibrary != nil, provider.RekognitionFaces != nil, provider.RekognitionLibrary != nil:
+	case provider.Fashion != nil, provider.ClothYOLO != nil, provider.FaceSim != nil, provider.HumanYOLO != nil, provider.HumanParser != nil, provider.RekognitionDetect != nil, provider.FacebodyCompare != nil, provider.RekognitionCompare != nil, provider.DashScopeEmbedding != nil, provider.CohereEmbedding != nil, provider.BedrockEmbedding != nil, provider.DashScopeRerank != nil, provider.BedrockRerank != nil, provider.CohereRerank != nil, provider.MixedbreadRerank != nil, provider.FacebodyDetect != nil, provider.FacebodyLibrary != nil, provider.RekognitionFaces != nil, provider.RekognitionLibrary != nil:
 		return capability == CapabilityText
 	case provider.VertexAI != nil:
 		// 类型能力不读 models。该列表可热更新，不能用来决定进程里有没有生图客户端。

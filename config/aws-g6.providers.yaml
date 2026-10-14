@@ -1,0 +1,37 @@
+# Merge into the target environment's complete runtime configuration; retain unrelated settings.
+# Ohio dev-branch deployment: modelhub / ppe_exhibition / config-ppe_exhibition.
+providers:
+  wgdl_segment_person:
+    models: [segment-person-bria, segment-subject-bria]
+    segment_person:
+      base_url: http://172.31.43.7:18280/segment-person
+      person_method: person-birefnet-portrait
+      subject_method: person-bria-rmbg
+  aws_g6_human_yolo:
+    models: [human-yolo]
+    human_yolo:
+      base_url: http://172.31.43.7:18280/human-yolo
+  aws_g6_legacy_human_parser:
+    models: [human-parser]
+    human_parser:
+      base_url: http://172.31.43.7:18280/human-parser/human_parser
+  aws_g6_human_parser:
+    models: [human_parse]
+    human_parser:
+      base_url: http://172.31.43.7:18280/human-parser
+  aws_g6_cloth_yolo:
+    models: [cloth-yolo]
+    cloth_yolo:
+      base_url: http://172.31.43.7:18280/cloth-yolo
+  aws_g6_facesim:
+    models: [facesim]
+    facesim:
+      base_url: http://172.31.43.7:18280/facesim
+model_routes:
+  segment-person-bria: wgdl_segment_person
+  segment-subject-bria: wgdl_segment_person
+  human-yolo: aws_g6_human_yolo
+  human-parser: aws_g6_legacy_human_parser
+  human_parse: aws_g6_human_parser
+  cloth-yolo: aws_g6_cloth_yolo
+  facesim: aws_g6_facesim

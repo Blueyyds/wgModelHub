@@ -68,6 +68,35 @@ func TestPersonEndpointSendsExistingFormContract(t *testing.T) {
 	}
 }
 
+func TestG6UsesPortraitForPersonAndBriaForSubject(t *testing.T) {
+	cutout := pngBytes(t)
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if err := r.ParseMultipartForm(4 << 20); err != nil {
+			t.Fatal(err)
+		}
+		expected := "person-bria-rmbg"
+		if r.URL.Path == "/segment-person/api/segment" {
+			expected = "person-birefnet-portrait"
+		} else if r.URL.Path != "/segment-person/api/segment_subject" {
+			t.Fatal("wrong G6 path")
+		}
+		if r.FormValue("method") != expected || r.Header.Get("Authorization") != "" {
+			t.Fatal("wrong endpoint model or authentication")
+		}
+		json.NewEncoder(w).Encode(map[string]string{"refined_png_b64": base64.StdEncoding.EncodeToString(cutout)})
+	}))
+	defer server.Close()
+	p, err := NewWithMethods("g6", server.URL+"/segment-person", "", "", "person-bria-rmbg", "person-birefnet-portrait", "person-bria-rmbg")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, model := range []string{models.SegmentPersonBria, models.SegmentSubjectBria} {
+		if _, err := p.GenerateImage(context.Background(), model, imageRequest(inlinePNG(cutout))); err != nil {
+			t.Fatal(err)
+		}
+	}
+}
+
 func TestSubjectEndpointOmitsPreprocess(t *testing.T) {
 	cutout := pngBytes(t)
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

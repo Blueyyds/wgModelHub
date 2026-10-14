@@ -17,6 +17,7 @@ import (
 	volcengineasr "github.com/wgdl666/wgModelHub/internal/infra/asr/volcengine"
 	"github.com/wgdl666/wgModelHub/internal/infra/bedrockembed"
 	"github.com/wgdl666/wgModelHub/internal/infra/bedrockrerank"
+	"github.com/wgdl666/wgModelHub/internal/infra/clothyolo"
 	"github.com/wgdl666/wgModelHub/internal/infra/cohereembed"
 	"github.com/wgdl666/wgModelHub/internal/infra/coherererank"
 	"github.com/wgdl666/wgModelHub/internal/infra/dashscopeembed"
@@ -26,6 +27,7 @@ import (
 	"github.com/wgdl666/wgModelHub/internal/infra/facebodycompare"
 	"github.com/wgdl666/wgModelHub/internal/infra/facebodydetect"
 	"github.com/wgdl666/wgModelHub/internal/infra/facebodylibrary"
+	"github.com/wgdl666/wgModelHub/internal/infra/facesim"
 	"github.com/wgdl666/wgModelHub/internal/infra/fashion"
 	"github.com/wgdl666/wgModelHub/internal/infra/geminivideo"
 	"github.com/wgdl666/wgModelHub/internal/infra/genai"
@@ -242,6 +244,20 @@ func buildProvider(ctx context.Context, name string, providerCfg config.Provider
 		}
 		// 仅暴露 Image：Remove Background 不是文本/视频能力，避免空实现伪装。
 		return provider.Set{Image: client}, nil
+	case providerCfg.ClothYOLO != nil:
+		cfg := providerCfg.ClothYOLO
+		client, err := clothyolo.New(name, cfg.BaseURL, cfg.Username, cfg.Password)
+		if err != nil {
+			return provider.Set{}, err
+		}
+		return provider.Set{Text: client}, nil
+	case providerCfg.FaceSim != nil:
+		cfg := providerCfg.FaceSim
+		client, err := facesim.New(name, cfg.BaseURL, cfg.Username, cfg.Password)
+		if err != nil {
+			return provider.Set{}, err
+		}
+		return provider.Set{Text: client}, nil
 	case providerCfg.HumanYOLO != nil:
 		cfg := providerCfg.HumanYOLO
 		client, err := humanyolo.New(name, cfg.BaseURL, cfg.Username, cfg.Password)
@@ -356,7 +372,7 @@ func buildProvider(ctx context.Context, name string, providerCfg config.Provider
 		return provider.Set{Text: client}, nil
 	case providerCfg.SegmentPerson != nil:
 		cfg := providerCfg.SegmentPerson
-		client, err := segmentperson.New(name, cfg.BaseURL, cfg.Username, cfg.Password, cfg.Method)
+		client, err := segmentperson.NewWithMethods(name, cfg.BaseURL, cfg.Username, cfg.Password, cfg.Method, cfg.PersonMethod, cfg.SubjectMethod)
 		if err != nil {
 			return provider.Set{}, err
 		}

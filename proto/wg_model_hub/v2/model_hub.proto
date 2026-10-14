@@ -61,6 +61,8 @@ enum ModelCategory {
   MODEL_CATEGORY_SEGMENT = 13;
   // 实时语音识别与 SPEECH(TTS) 方向相反，必须独立列类，避免调用方把合成模型用于转写。
   MODEL_CATEGORY_ASR = 14;
+  // Clothing boxes are separate from person detection.
+  MODEL_CATEGORY_CLOTH_DETECT = 15;
 }
 
 message ListModelsRequest {

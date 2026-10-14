@@ -83,6 +83,8 @@ const (
 	SegmentSubjectBria = "segment-subject-bria"
 	// HumanYOLO 是自建人体检测 POST /predict。置信度和 IoU 属于该服务契约，不下发成调用方参数。
 	HumanYOLO = "human-yolo"
+	ClothYOLO = "cloth-yolo"
+	FaceSim   = "facesim"
 	// RekognitionDetectLabels 是 DetectLabels 的 Person 实例框，和 HumanYOLO 不能互相替代。
 	RekognitionDetectLabels = "rekognition-detect-labels"
 	// FacebodyCompareFace 是阿里云 Facebody 的 1:1 比对。两张图进，0 到 1 的相似度出。
@@ -212,7 +214,7 @@ func All() []string {
 		PhotoroomSegment,
 		SegmentPersonBria,
 		SegmentSubjectBria,
-		HumanYOLO,
+		HumanYOLO, ClothYOLO, FaceSim,
 		RekognitionDetectLabels,
 		FacebodyCompareFace,
 		RekognitionCompareFaces,

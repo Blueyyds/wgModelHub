@@ -32,15 +32,22 @@ const (
 
 // Provider 只实现 ImageProvider。model 选择端点，不进入上游请求体。
 type Provider struct {
-	name     string
-	baseURL  string
-	username string
-	password string
-	method   string
-	client   *http.Client
+	name          string
+	baseURL       string
+	username      string
+	password      string
+	method        string
+	personMethod  string
+	subjectMethod string
+	client        *http.Client
 }
 
 func New(name, baseURL, username, password, method string) (*Provider, error) {
+	return NewWithMethods(name, baseURL, username, password, method, "", "")
+}
+
+// NewWithMethods preserves legacy method while allowing endpoint-specific algorithms.
+func NewWithMethods(name, baseURL, username, password, method, personMethod, subjectMethod string) (*Provider, error) {
 	name = strings.TrimSpace(name)
 	baseURL = strings.TrimRight(strings.TrimSpace(baseURL), "/")
 	username = strings.TrimSpace(username)
@@ -49,7 +56,9 @@ func New(name, baseURL, username, password, method string) (*Provider, error) {
 	if name == "" {
 		return nil, provider.New(provider.ErrorConfiguration, "segment-person provider name is required")
 	}
-	if baseURL == "" || method == "" {
+	personMethod = strings.TrimSpace(personMethod)
+	subjectMethod = strings.TrimSpace(subjectMethod)
+	if baseURL == "" || (method == "" && (personMethod == "" || subjectMethod == "")) {
 		return nil, provider.New(provider.ErrorConfiguration, "segment-person base_url and method are required")
 	}
 	if (username == "") != (password == "") {
@@ -58,12 +67,14 @@ func New(name, baseURL, username, password, method string) (*Provider, error) {
 	client := telemetry.NewHTTPClient()
 	client.Timeout = requestTimeout
 	return &Provider{
-		name:     name,
-		baseURL:  baseURL,
-		username: username,
-		password: password,
-		method:   method,
-		client:   client,
+		name:          name,
+		baseURL:       baseURL,
+		username:      username,
+		password:      password,
+		method:        method,
+		personMethod:  personMethod,
+		subjectMethod: subjectMethod,
+		client:        client,
 	}, nil
 }
 
@@ -136,12 +147,22 @@ func inlineImage(media *modelhubv2.Media) ([]byte, error) {
 	return data.Data, nil
 }
 
+func (p *Provider) methodFor(person bool) string {
+	if person && p.personMethod != "" {
+		return p.personMethod
+	}
+	if !person && p.subjectMethod != "" {
+		return p.subjectMethod
+	}
+	return p.method
+}
+
 func (p *Provider) doSegment(ctx context.Context, endpoint string, imageBytes []byte, person bool) ([]byte, error) {
 	var body bytes.Buffer
 	writer := multipart.NewWriter(&body)
 	fields := map[string]string{
 		"image":  base64.StdEncoding.EncodeToString(imageBytes),
-		"method": p.method,
+		"method": p.methodFor(person),
 		"output": "b64",
 	}
 	// 人物接口沿用现网约定：preprocess 字段存在且值为字符串 "false"。商品接口不带该字段。

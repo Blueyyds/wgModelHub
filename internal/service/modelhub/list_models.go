@@ -68,6 +68,8 @@ func catalogFilter(category modelhubv2.ModelCategory) (func(models.Category) boo
 		return func(c models.Category) bool { return c == models.CategoryFaceDetect }, nil
 	case modelhubv2.ModelCategory_MODEL_CATEGORY_FACE_LIBRARY:
 		return func(c models.Category) bool { return c == models.CategoryFaceLibrary }, nil
+	case modelhubv2.ModelCategory_MODEL_CATEGORY_CLOTH_DETECT:
+		return func(c models.Category) bool { return c == models.CategoryClothDetect }, nil
 	case modelhubv2.ModelCategory_MODEL_CATEGORY_PERSON_DETECT:
 		return func(c models.Category) bool { return c == models.CategoryPersonDetect }, nil
 	case modelhubv2.ModelCategory_MODEL_CATEGORY_HUMAN_PARSER:
@@ -103,6 +105,8 @@ func protoCategory(category models.Category) modelhubv2.ModelCategory {
 		return modelhubv2.ModelCategory_MODEL_CATEGORY_FACE_DETECT
 	case models.CategoryFaceLibrary:
 		return modelhubv2.ModelCategory_MODEL_CATEGORY_FACE_LIBRARY
+	case models.CategoryClothDetect:
+		return modelhubv2.ModelCategory_MODEL_CATEGORY_CLOTH_DETECT
 	case models.CategoryPersonDetect:
 		return modelhubv2.ModelCategory_MODEL_CATEGORY_PERSON_DETECT
 	case models.CategoryHumanParser:

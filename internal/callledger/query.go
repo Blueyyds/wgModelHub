@@ -248,7 +248,7 @@ func Replayable(rec Record) (bool, string) {
 		return false, "输入媒体未归档"
 	}
 	switch rec.Capability {
-	case CapabilityASR, "embedding", "rerank", "face_embedding", "face_library", "person_detect", "human_parser", "segment":
+	case CapabilityASR, "embedding", "rerank", "face_embedding", "face_library", "person_detect", "cloth_detect", "human_parser", "segment":
 		return false, "这一期不重放该能力"
 	}
 	return true, ""
