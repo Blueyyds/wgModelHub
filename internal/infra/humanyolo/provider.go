@@ -41,8 +41,8 @@ func New(name, baseURL, username, password string) (*Provider, error) {
 	if name == "" || baseURL == "" {
 		return nil, provider.New(provider.ErrorConfiguration, "human-yolo name and base_url are required")
 	}
-	if username == "" || password == "" {
-		return nil, provider.New(provider.ErrorConfiguration, "human-yolo username and password are required")
+	if (username == "") != (password == "") {
+		return nil, provider.New(provider.ErrorConfiguration, "human-yolo username and password must be configured together")
 	}
 	client := telemetry.NewHTTPClient()
 	client.Timeout = timeout
@@ -105,7 +105,9 @@ func (p *Provider) post(ctx context.Context, imageBytes []byte) ([]byte, error) 
 		return nil, provider.WrapNotAttempted(provider.ErrorInvalidArgument, p.name+" create yolo request", err)
 	}
 	httpReq.Header.Set("content-type", writer.FormDataContentType())
-	httpReq.SetBasicAuth(p.username, p.password)
+	if p.username != "" {
+		httpReq.SetBasicAuth(p.username, p.password)
+	}
 	response, err := p.client.Do(httpReq)
 	if err != nil {
 		return nil, provider.Wrap(provider.ErrorUnavailable, p.name+" yolo request failed", err)

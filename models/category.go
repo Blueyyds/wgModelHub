@@ -18,6 +18,7 @@ const (
 	CategoryFaceLibrary     Category = "face_library"
 	// CategoryPersonDetect 是画面里的人框。和检脸、看图说话分开。
 	CategoryPersonDetect Category = "person_detect"
+	CategoryClothDetect  Category = "cloth_detect"
 	// CategoryHumanParser 是人体和衣服区域解析，输出分割而不是框。
 	CategoryHumanParser Category = "human_parser"
 	// CategorySegment 是抠图。透明图出，不是文生图。
@@ -95,6 +96,8 @@ var categories = map[string]Category{
 	SegmentPersonBria:       CategorySegment,
 	SegmentSubjectBria:      CategorySegment,
 	HumanYOLO:               CategoryPersonDetect,
+	ClothYOLO:               CategoryClothDetect,
+	FaceSim:                 CategoryFaceCompare,
 	RekognitionDetectLabels: CategoryPersonDetect,
 	HumanParser:             CategoryHumanParser,
 	HumanParse:              CategoryHumanParser,
@@ -156,7 +159,7 @@ func (c Category) Public() bool {
 	switch c {
 	case CategoryLLM, CategoryMultimodal, CategoryImageGeneration, CategoryVideoGeneration, CategorySpeech,
 		CategoryEmbedding, CategoryRerank, CategoryFaceCompare, CategoryFaceDetect, CategoryFaceLibrary,
-		CategoryPersonDetect, CategoryHumanParser, CategorySegment:
+		CategoryPersonDetect, CategoryClothDetect, CategoryHumanParser, CategorySegment:
 		return true
 	case CategoryASR:
 		return true

@@ -137,6 +137,32 @@ provider」路由。同一模型仅被一个实例声明时可隐式选定；被
 `model_routes` 显式选定。同名同资源 provider 仅 `models` / `model_routes` 可经
 Nacos 热更新；实例增删或凭据/端点等资源参数变化须滚动重启。调用方应引用
 `github.com/wgdl666/wgModelHub/models` 常量，例如 `models.Speech28Turbo`。
+
+### AWS-G6 视觉服务
+
+`config/aws-g6.providers.yaml` 是待合并的 provider 和路由配置，不是完整的 Nacos 配置；合并时保留其他模型、数据库、日志等设置。部署前须从实际 ModelHub Pod 验证 `172.31.43.7:18280` 可达，再通过 workspace 发布流程滚动重启。
+
+| 服务 | ModelHub ID | G6 路径 | 输出 |
+| --- | --- | --- | --- |
+| HumanParser | `human-parser`、`human_parse` | `/human-parser/human_parser/predict` | 解析 JSON |
+| SegmentPerson | `segment-person-bria` | `/segment-person/api/segment` | PNG，人像 Portrait |
+| SegmentPerson | `segment-subject-bria` | `/segment-person/api/segment_subject` | PNG，主体 BRIA |
+| HumanYolo | `human-yolo` | `/human-yolo/predict` | 检测 JSON |
+| ClothYolo | `cloth-yolo` | `/cloth-yolo/predict` | 检测 JSON |
+| FaceSim | `facesim` | `/facesim/compare` | 比对 JSON |
+
+人像 ID 是历史调用 ID，实际算法由 `segment_person.person_method: person-birefnet-portrait` 选择；主体用 `subject_method: person-bria-rmbg`。原有 `method` 仍可作为兼容回退。旧 `human-parser` provider 的 base URL 包含 `/human_parser`，新 `human_parse` provider 则只包含服务前缀，两者最终请求同一预测接口。
+
+这些上游可省略用户名和密码；配置 Basic Auth 时必须两项同时填写。FaceSim 输入两张图片，`similarity` 保持 0–1，`cosine_similarity` 保留上游带符号的余弦分数。ClothYolo 是独立服装检测能力，不参与人像抠图过滤。
+
+在可访问 G6 的环境运行真实图片验证：
+
+```bash
+go run ./cmd/g6-smoke -image /path/to/portrait.jpg -out artifacts/g6-smoke
+```
+
+该命令在进程内启动候选 ModelHub gRPC 服务，检查上述七个 ID 的真实上游结果，并保存 JSON 和透明 PNG；不修改线上部署或 Nacos。FaceSim 使用同图自比。耗时包含适配器和上游请求，不能代表跨区域调用延迟。
+
 `models.Flux2Klein9B` 当前仅支持带参考图的 image edit（i2i），须绑定独立 OpenAI Images 实例。
 `models.GPTImage2` / `models.GPTImage25Flare` / `models.GPTImage25Sunburst` 走 OpenAI Images API（generations/edits），示例与审计目标实例键都是 `AIG_openai`（`https://api.aig-ai.com/v1`），不能并入 Gemini generateContent 生图实例。
 `models.GeminiNanoBanana21`（`gemini-nano-banana-2.1`）走 Vertex 的现有 Generate 图片链路，示例实例是 `Vertex_AI_nano_banana`。调用方使用 `request.model` 加 `OutputSpec.image`。分辨率传 `1K` / `2K` / `4K`。Vertex 生图一律打 `locations/global`，不按模型 ID 留在 Express。官方 Express 短路径不带 project，会落到调用方区域，所以生图实例必须显式配置 `vertexai.project`；生图从第一次就打 `projects/{project}/locations/global`，密钥仍是原来的 API key，不走 ADC。缺 project 时 Vertex 生图返回配置错误，不出站。文本请求保持无 project 的 Express 短路径。`vertexai.proxy_url` 可空；只在直连 Google 不通的环境填写已有 HTTP 代理。思考推荐 `MINIMAL` / `MEDIUM` / `HIGH`；`LOW` 会原样下发，由上游拒绝。官方不支持 `temperature`，设置了会原样下发并返回上游错误。

@@ -381,6 +381,16 @@ func endpoint(provider config.ProviderConfig) (protocol, raw string, err error) 
 			return "", "", fmt.Errorf("vworld_image base_url is required")
 		}
 		return "vworld_image", provider.VWorldImage.BaseURL, nil
+	case provider.ClothYOLO != nil:
+		if strings.TrimSpace(provider.ClothYOLO.BaseURL) == "" {
+			return "", "", fmt.Errorf("cloth_yolo base_url is required")
+		}
+		return "cloth_yolo", provider.ClothYOLO.BaseURL, nil
+	case provider.FaceSim != nil:
+		if strings.TrimSpace(provider.FaceSim.BaseURL) == "" {
+			return "", "", fmt.Errorf("facesim base_url is required")
+		}
+		return "facesim", provider.FaceSim.BaseURL, nil
 	case provider.HumanYOLO != nil:
 		if strings.TrimSpace(provider.HumanYOLO.BaseURL) == "" {
 			return "", "", fmt.Errorf("human_yolo base_url is required")
