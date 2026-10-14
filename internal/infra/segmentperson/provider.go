@@ -148,6 +148,11 @@ func (p *Provider) doSegment(ctx context.Context, endpoint string, imageBytes []
 	if person {
 		fields["preprocess"] = "false"
 	}
+	// 人物和商品抠图都走薇光点亮。上游不读 traceparent，表单 trace_id 才能和账本对上。
+	// 没有有效 span 时不写空字段，避免上游把空字符串当成一次真实追踪。
+	if traceID := telemetry.TraceID(ctx); traceID != "" {
+		fields["trace_id"] = traceID
+	}
 	for name, value := range fields {
 		if err := writer.WriteField(name, value); err != nil {
 			return nil, provider.WrapNotAttempted(provider.ErrorUnavailable, p.name+" build segment request", err)

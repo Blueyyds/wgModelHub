@@ -7,7 +7,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"go.opentelemetry.io/otel/trace"
+	"github.com/wgdl666/wgModelHub/internal/infra/telemetry"
 )
 
 const uploadTimeout = 30 * time.Second
@@ -41,12 +41,9 @@ type Call struct {
 }
 
 // TraceIDFromContext 读取当前 span 的 trace。无效 span 返回空字符串。
+// 与薇光点亮出站表单共用 telemetry.TraceID，保证账本和上游请求是同一次 trace。
 func TraceIDFromContext(ctx context.Context) string {
-	sc := trace.SpanFromContext(ctx).SpanContext()
-	if !sc.IsValid() {
-		return ""
-	}
-	return sc.TraceID().String()
+	return telemetry.TraceID(ctx)
 }
 
 // Open 异步写入请求，调用方不必等它完成再去打模型。

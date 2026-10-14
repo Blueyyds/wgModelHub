@@ -149,3 +149,15 @@ func TestNewTimedHTTPClientEmitsProviderHTTPSpan(t *testing.T) {
 		t.Fatalf("span status=%v want Error for HTTP 429", httpSpan.Status().Code)
 	}
 }
+
+func TestTraceIDMatchesCurrentSpan(t *testing.T) {
+	if got := TraceID(context.Background()); got != "" {
+		t.Fatalf("trace without span = %q", got)
+	}
+	tp := sdktrace.NewTracerProvider()
+	ctx, span := tp.Tracer("test").Start(context.Background(), "modelhub.Generate")
+	defer span.End()
+	if got := TraceID(ctx); got != span.SpanContext().TraceID().String() {
+		t.Fatalf("trace = %q", got)
+	}
+}

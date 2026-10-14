@@ -16,6 +16,7 @@ import (
 	modelhubv2 "github.com/wgdl666/wgModelHub/gen/wg_model_hub/v2"
 	"github.com/wgdl666/wgModelHub/internal/provider"
 	"github.com/wgdl666/wgModelHub/models"
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 )
 
 func pngBytes(t *testing.T) []byte {
@@ -86,6 +87,38 @@ func TestSubjectEndpointOmitsPreprocess(t *testing.T) {
 	p := newTestProvider(t, server.URL, "", "")
 	if _, err := p.GenerateImage(context.Background(), models.SegmentSubjectBria, imageRequest(inlinePNG(cutout))); err != nil {
 		t.Fatal(err)
+	}
+}
+
+func TestSegmentSendsTraceIDOnlyWhenSpanIsValid(t *testing.T) {
+	cutout := pngBytes(t)
+	var traces []string
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if err := r.ParseMultipartForm(4 << 20); err != nil {
+			t.Fatal(err)
+		}
+		if r.Form.Has("trace_id") {
+			traces = append(traces, r.FormValue("trace_id"))
+		} else {
+			traces = append(traces, "")
+		}
+		_ = json.NewEncoder(w).Encode(map[string]string{"refined_png_b64": base64.StdEncoding.EncodeToString(cutout)})
+	}))
+	defer server.Close()
+	p := newTestProvider(t, server.URL, "user", "secret")
+	req := imageRequest(inlinePNG(cutout))
+	if _, err := p.GenerateImage(context.Background(), models.SegmentPersonBria, req); err != nil {
+		t.Fatal(err)
+	}
+	tp := sdktrace.NewTracerProvider()
+	ctx, span := tp.Tracer("test").Start(context.Background(), "modelhub.Generate")
+	defer span.End()
+	if _, err := p.GenerateImage(ctx, models.SegmentSubjectBria, req); err != nil {
+		t.Fatal(err)
+	}
+	want := span.SpanContext().TraceID().String()
+	if len(traces) != 2 || traces[0] != "" || traces[1] != want {
+		t.Fatalf("traces=%v want [\"\" %s]", traces, want)
 	}
 }
 

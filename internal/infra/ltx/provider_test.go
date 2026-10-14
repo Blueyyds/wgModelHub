@@ -16,6 +16,7 @@ import (
 	"github.com/wgdl666/wgModelHub/internal/provider"
 	"github.com/wgdl666/wgModelHub/models"
 	"github.com/wgdl666/wgModelHub/protocol"
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 )
 
 // submitGetRead 仅测试复用：走正式 Submit→Get→ReadResult；无 deadline 时加 5s 上限，避免无界轮询。
@@ -381,5 +382,38 @@ func TestSubmitVideoSendsUpstreamLTXModelField(t *testing.T) {
 	}
 	if id != "mapped" {
 		t.Fatalf("job=%s", id)
+	}
+}
+
+func TestSubmitSendsTraceIDOnlyWhenSpanIsValid(t *testing.T) {
+	var traces []string
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if err := r.ParseMultipartForm(1 << 20); err != nil {
+			t.Fatal(err)
+		}
+		if r.Form.Has("trace_id") {
+			traces = append(traces, r.FormValue("trace_id"))
+		} else {
+			traces = append(traces, "")
+		}
+		_, _ = w.Write([]byte(`{"job_id":"traced"}`))
+	}))
+	defer server.Close()
+	p, err := New("ltx", server.URL, "", 4, 24, 42, 1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := p.submit(context.Background(), "ltx", []byte("image"), "prompt", "720p", nil); err != nil {
+		t.Fatal(err)
+	}
+	tp := sdktrace.NewTracerProvider()
+	ctx, span := tp.Tracer("test").Start(context.Background(), "modelhub.SubmitVideo")
+	defer span.End()
+	if _, err := p.submit(ctx, "ltx", []byte("image"), "prompt", "720p", nil); err != nil {
+		t.Fatal(err)
+	}
+	want := span.SpanContext().TraceID().String()
+	if len(traces) != 2 || traces[0] != "" || traces[1] != want {
+		t.Fatalf("traces=%v want [\"\" %s]", traces, want)
 	}
 }

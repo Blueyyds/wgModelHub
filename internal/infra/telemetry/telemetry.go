@@ -112,6 +112,16 @@ func StartSpan(ctx context.Context, name string) (context.Context, trace.Span) {
 	return otel.Tracer("github.com/wgdl666/wgModelHub").Start(ctx, name)
 }
 
+// TraceID 返回当前 span 的 trace。账本和薇光点亮出站表单都走这里，避免两处各解析一次对不上。
+// 无效 span 返回空字符串；调用方不得把空值下发成请求参数。
+func TraceID(ctx context.Context) string {
+	sc := trace.SpanFromContext(ctx).SpanContext()
+	if !sc.IsValid() {
+		return ""
+	}
+	return sc.TraceID().String()
+}
+
 // RecordError 把真实失败记到当前 span。上游主动取消（如 wardrobe VTON 三路竞速淘汰）
 // 是正常中断：账本/指标已归 cancelled，这里不得抬成 Error，否则 Logfire/Ops 排障会被噪声淹没。
 func RecordError(ctx context.Context, err error) {
