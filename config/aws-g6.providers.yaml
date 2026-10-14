@@ -1,4 +1,5 @@
-# Merge into the dev wg.mirror.modelHub configuration; retain all unrelated settings.
+# Merge into the target environment's complete runtime configuration; retain unrelated settings.
+# Ohio dev-branch deployment: modelhub / ppe_exhibition / config-ppe_exhibition.
 providers:
   wgdl_segment_person:
     models: [segment-person-bria, segment-subject-bria]

@@ -140,7 +140,9 @@ Nacos 热更新；实例增删或凭据/端点等资源参数变化须滚动重�
 
 ### AWS-G6 视觉服务
 
-`config/aws-g6.providers.yaml` 是待合并的 provider 和路由配置，不是完整的 Nacos 配置；合并时保留其他模型、数据库、日志等设置。部署前须从实际 ModelHub Pod 验证 `172.31.43.7:18280` 可达，再通过 workspace 发布流程滚动重启。
+`config/aws-g6.providers.yaml` 是待合并的 provider 和路由配置，不是完整的 Nacos/AppConfig 配置；合并时保留其他模型、数据库、日志等设置。部署前须从实际 ModelHub 运行环境验证 `172.31.43.7:18280` 可达，连接资源变化须滚动重启。
+
+美东目标按 `wgPlatformInfra/config/services-tomirro/modelhub.yaml` 核对：代码分支是 `dev`，运行身份是 `US/ppe_exhibition`，ECS 为 `us-east-2` 的 `tomirro/modelhub-service`。AppConfig 为 `modelhub / ppe_exhibition / config-ppe_exhibition`（application `u8e7hop`、environment `em4ujml`、profile `n1chtur`），不是新加坡使用的 `modelhub / dev / config-dev`。发布前再从实际 ECS task 和 AppConfig metadata 核实身份；备份当前完整配置，合并 overlay 后执行 `ParseAndValidateYAML`。先让支持新 provider 的代码发布成功，再部署新配置并滚动重启；验收失败时恢复原配置版本和原健康镜像。仓库现有美东发布流程是 `.github/workflows/deploy-aws-exhibition.yml` → `tomirro-modelhub` 托管流水线，按正式 `dev` 的精确 SHA 发布。
 
 | 服务 | ModelHub ID | G6 路径 | 输出 |
 | --- | --- | --- | --- |
