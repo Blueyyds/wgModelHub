@@ -406,7 +406,8 @@ func parseGarmentMeta(text string) (garmentMeta, error) {
 // garmentRoleFromSlot 把人体解析槽位换成上游拆衣服已经接受的 garment_role。
 // 这些 role 是本接口原先按品类根下发的值：top/dress 对应 tops、dresses 的 clothing::top/full，
 // skirt/pants 对应 bottoms 的 clothing::bottom，feet 对应 footwear 的 shoes，bag/belt 对应同名 role。
-// 只认解析槽位本身。footwear、鞋、shoes、叶子 path 都不是槽位，hat/scarf/glasses 也没有既有 role。
+// 配饰沿用上游按部位细分的 accessory::*：glasses 是 eye，hat 是 head，scarf 是 neck。
+// 只认解析槽位本身。footwear、鞋、shoes、叶子 path 都不是槽位。
 func garmentRoleFromSlot(slot string) (string, bool) {
 	switch strings.ToLower(strings.TrimSpace(slot)) {
 	case "top", "dress":
@@ -419,6 +420,12 @@ func garmentRoleFromSlot(slot string) (string, bool) {
 		return "bag", true
 	case "belt":
 		return "belt", true
+	case "glasses":
+		return "accessory::eye", true
+	case "hat":
+		return "accessory::head", true
+	case "scarf":
+		return "accessory::neck", true
 	default:
 		return "", false
 	}

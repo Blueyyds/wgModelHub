@@ -249,7 +249,7 @@ func TestGarmentExtractionOmitsUnmappedRole(t *testing.T) {
 		t.Fatal(err)
 	}
 	// 无裁切时不支持的槽位也不发明 role，并且不因此失败。
-	if _, err := p.GenerateImage(context.Background(), models.VWorldWardrobe10, wardrobeRequest(src, `{"garment_name":"帽子","inventory_slot":"hat","garment_category":"accessories.hats"}`)); err != nil {
+	if _, err := p.GenerateImage(context.Background(), models.VWorldWardrobe10, wardrobeRequest(src, `{"garment_name":"项链","inventory_slot":"necklace","garment_category":"jewelry.necklaces"}`)); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -430,14 +430,17 @@ func TestNewRequiresAuth(t *testing.T) {
 
 func TestGarmentRoleFromSlot(t *testing.T) {
 	supported := map[string]string{
-		"top":   "clothing::top/full",
-		"dress": "clothing::top/full",
-		"skirt": "clothing::bottom",
-		"pants": "clothing::bottom",
-		"feet":  "shoes",
-		"FEET":  "shoes",
-		"bag":   "bag",
-		"belt":  "belt",
+		"top":     "clothing::top/full",
+		"dress":   "clothing::top/full",
+		"skirt":   "clothing::bottom",
+		"pants":   "clothing::bottom",
+		"feet":    "shoes",
+		"FEET":    "shoes",
+		"bag":     "bag",
+		"belt":    "belt",
+		"glasses": "accessory::eye",
+		"hat":     "accessory::head",
+		"scarf":   "accessory::neck",
 	}
 	for slot, want := range supported {
 		got, ok := garmentRoleFromSlot(slot)
@@ -446,7 +449,7 @@ func TestGarmentRoleFromSlot(t *testing.T) {
 		}
 	}
 	// 类目根、中文品类和 role 自身都不是解析槽位，不能再当回退。
-	for _, slot := range []string{"", "hat", "scarf", "glasses", "jewelry", "footwear", "shoes", "tops.shirts", "鞋", "outfit", "left shoe"} {
+	for _, slot := range []string{"", "jewelry", "footwear", "shoes", "tops.shirts", "鞋", "outfit", "left shoe", "accessory::eye"} {
 		if got, ok := garmentRoleFromSlot(slot); ok || got != "" {
 			t.Fatalf("slot %q mapped to %q", slot, got)
 		}
@@ -468,6 +471,9 @@ func TestGarmentExtractionMapsParserSlotsToRole(t *testing.T) {
 		{slot: "feet", role: "shoes"},
 		{slot: "bag", role: "bag"},
 		{slot: "belt", role: "belt"},
+		{slot: "glasses", role: "accessory::eye"},
+		{slot: "hat", role: "accessory::head"},
+		{slot: "scarf", role: "accessory::neck"},
 	}
 	for _, tc := range cases {
 		t.Run(tc.slot, func(t *testing.T) {
@@ -519,11 +525,9 @@ func TestGarmentExtractionCropRejectsSlotBeforeHTTP(t *testing.T) {
 	texts := []string{
 		`{"garment_name":"白衬衫","garment_category":"tops.shirts","parse_labels":{"1":"top"}}`,
 		`{"garment_name":"白鞋","inventory_slot":"","garment_category":"footwear.sneakers","parse_labels":{"4":"feet"}}`,
-		`{"garment_name":"帽子","inventory_slot":"hat","garment_category":"accessories.hats","parse_labels":{"1":"hat"}}`,
 		`{"garment_name":"鞋","inventory_slot":"shoes","garment_category":"鞋","parse_labels":{"4":"feet"}}`,
 		`{"garment_name":"鞋","inventory_slot":"footwear","parse_labels":{"4":"feet"}}`,
-		`{"garment_name":"围巾","inventory_slot":"scarf","parse_labels":{"1":"scarf"}}`,
-		`{"garment_name":"眼镜","inventory_slot":"glasses","parse_labels":{"1":"glasses"}}`,
+		`{"garment_name":"项链","inventory_slot":"necklace","parse_labels":{"1":"necklace"}}`,
 	}
 	for _, text := range texts {
 		_, err := p.GenerateImage(context.Background(), models.VWorldWardrobe10, wardrobeRequest(src, text, mask))
