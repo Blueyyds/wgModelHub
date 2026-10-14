@@ -142,7 +142,12 @@ func (p *Provider) detectFaces(ctx context.Context, request *modelhubv2.Generate
 	if err != nil {
 		return nil, err
 	}
-	out, err := p.client.DetectFaces(ctx, &rekognition.DetectFacesInput{Image: &types.Image{Bytes: data}})
+	limit, attributes := detectOptions(request)
+	// 默认不拉性别。身份检脸和体模裁锚点只要框；性别竞速才会要求 attributes=all。
+	out, err := p.client.DetectFaces(ctx, &rekognition.DetectFacesInput{
+		Image:      &types.Image{Bytes: data},
+		Attributes: attributes,
+	})
 	if err != nil {
 		if isNoFace(err) {
 			return jsonEvent(map[string]any{"faces": []any{}})
@@ -154,20 +159,28 @@ func (p *Provider) detectFaces(ctx context.Context, request *modelhubv2.Generate
 		return nil, provider.Wrap(provider.ErrorInvalidArgument, "decode detect image", err)
 	}
 	bounds := img.Bounds()
-	limit := maxFacesFrom(request)
-	faces := make([]map[string]int, 0)
+	faces := make([]faceBox, 0)
 	if out != nil {
 		for _, detail := range out.FaceDetails {
 			if detail.BoundingBox == nil {
 				continue
 			}
 			box := detail.BoundingBox
-			item := map[string]int{
-				"left": int(float64(bounds.Dx()) * float64(awsFloat(box.Left))), "top": int(float64(bounds.Dy()) * float64(awsFloat(box.Top))),
-				"width": int(float64(bounds.Dx()) * float64(awsFloat(box.Width))), "height": int(float64(bounds.Dy()) * float64(awsFloat(box.Height))),
+			item := faceBox{
+				Left:   int(float64(bounds.Dx()) * float64(awsFloat(box.Left))),
+				Top:    int(float64(bounds.Dy()) * float64(awsFloat(box.Top))),
+				Width:  int(float64(bounds.Dx()) * float64(awsFloat(box.Width))),
+				Height: int(float64(bounds.Dy()) * float64(awsFloat(box.Height))),
 			}
-			if item["width"] <= 0 || item["height"] <= 0 {
+			if item.Width <= 0 || item.Height <= 0 {
 				continue
+			}
+			// 性别只在调用方明确要 ALL 时回写。Value 收成 male/female，和 UserCenter 档案口径一致。
+			if len(attributes) > 0 && detail.Gender != nil && detail.Gender.Value != "" {
+				item.Gender = strings.ToLower(string(detail.Gender.Value))
+				if detail.Gender.Confidence != nil {
+					item.GenderConfidence = float64(*detail.Gender.Confidence)
+				}
 			}
 			faces = append(faces, item)
 			if len(faces) >= limit {
@@ -176,6 +189,15 @@ func (p *Provider) detectFaces(ctx context.Context, request *modelhubv2.Generate
 		}
 	}
 	return jsonEvent(map[string]any{"faces": faces})
+}
+
+type faceBox struct {
+	Left             int     `json:"left"`
+	Top              int     `json:"top"`
+	Width            int     `json:"width"`
+	Height           int     `json:"height"`
+	Gender           string  `json:"gender,omitempty"`
+	GenderConfidence float64 `json:"gender_confidence,omitempty"`
 }
 
 func (p *Provider) search(ctx context.Context, request *modelhubv2.GenerateRequest, limit int) (*modelhubv2.GenerateEvent, error) {
@@ -271,17 +293,23 @@ func isNoFace(err error) bool {
 	return errors.As(err, &apiErr) && apiErr.ErrorCode() == "InvalidParameterException" && strings.Contains(strings.ToLower(apiErr.ErrorMessage()), "no faces")
 }
 
-func maxFacesFrom(request *modelhubv2.GenerateRequest) int {
+func detectOptions(request *modelhubv2.GenerateRequest) (int, []types.Attribute) {
 	var parsed struct {
-		MaxFaces int `json:"max_faces"`
+		MaxFaces   int    `json:"max_faces"`
+		Attributes string `json:"attributes"`
 	}
-	if err := json.Unmarshal([]byte(provider.UserText(inputOf(request))), &parsed); err != nil || parsed.MaxFaces <= 0 {
-		return 10
+	_ = json.Unmarshal([]byte(provider.UserText(inputOf(request))), &parsed)
+	limit := parsed.MaxFaces
+	if limit <= 0 {
+		limit = 10
 	}
-	if parsed.MaxFaces > 30 {
-		return 30
+	if limit > 30 {
+		limit = 30
 	}
-	return parsed.MaxFaces
+	if strings.EqualFold(strings.TrimSpace(parsed.Attributes), "all") {
+		return limit, []types.Attribute{types.AttributeAll}
+	}
+	return limit, nil
 }
 
 func inputOf(request *modelhubv2.GenerateRequest) *modelhubv2.Input {
