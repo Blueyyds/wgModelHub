@@ -305,6 +305,11 @@ type imageUpload struct {
 }
 
 func (p *Provider) doMultipart(ctx context.Context, path string, fields map[string]string, images []imageUpload) ([]byte, error) {
+	// 薇光点亮生图上游不读 W3C traceparent。表单里的 trace_id 才能和账本、Logfire 对上同一次调用。
+	// 没有有效 span 时不写空字段，避免上游把空字符串当成一次真实追踪。
+	if traceID := telemetry.TraceID(ctx); traceID != "" {
+		fields["trace_id"] = traceID
+	}
 	var buf bytes.Buffer
 	writer := multipart.NewWriter(&buf)
 	for name, value := range fields {

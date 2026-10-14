@@ -19,6 +19,7 @@ import (
 	modelhubv2 "github.com/wgdl666/wgModelHub/gen/wg_model_hub/v2"
 	"github.com/wgdl666/wgModelHub/internal/provider"
 	"github.com/wgdl666/wgModelHub/models"
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 )
 
 func pngBytes(t *testing.T) []byte {
@@ -614,6 +615,40 @@ func TestBaseURLFollowsResolverOnNextRequest(t *testing.T) {
 	}
 	if len(hits) != 2 || hits[0] != "startup" || hits[1] != "hot" {
 		t.Fatalf("hits=%v", hits)
+	}
+}
+
+func TestDoMultipartSendsTraceIDOnlyWhenSpanIsValid(t *testing.T) {
+	var got string
+	var present bool
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if err := r.ParseMultipartForm(1 << 20); err != nil {
+			t.Fatal(err)
+		}
+		present = r.Form.Has("trace_id")
+		got = r.FormValue("trace_id")
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(`{}`))
+	}))
+	defer server.Close()
+	p := newTestProvider(t, server.URL)
+
+	if _, err := p.doMultipart(context.Background(), "/v1/images/edits", map[string]string{"n": "1"}, nil); err != nil {
+		t.Fatal(err)
+	}
+	if present {
+		t.Fatalf("trace_id=%q without span", got)
+	}
+
+	tp := sdktrace.NewTracerProvider()
+	ctx, span := tp.Tracer("test").Start(context.Background(), "modelhub.Generate")
+	defer span.End()
+	want := span.SpanContext().TraceID().String()
+	if _, err := p.doMultipart(ctx, "/v1/images/edits", map[string]string{"n": "1"}, nil); err != nil {
+		t.Fatal(err)
+	}
+	if !present || got != want {
+		t.Fatalf("trace_id=%q present=%v want %s", got, present, want)
 	}
 }
 

@@ -230,6 +230,10 @@ func (p *Provider) submit(ctx context.Context, model string, imageBytes []byte, 
 	if motionTips != "" {
 		fields["motion_tips"] = motionTips
 	}
+	// 穿搭视频和生图一样：上游只认表单参数，不认 traceparent。轮询和下载不带这个字段。
+	if traceID := telemetry.TraceID(ctx); traceID != "" {
+		fields["trace_id"] = traceID
+	}
 	for name, value := range fields {
 		if err := writer.WriteField(name, value); err != nil {
 			return "", provider.WrapNotAttempted(provider.ErrorInvalidArgument, "write multipart field", err)
