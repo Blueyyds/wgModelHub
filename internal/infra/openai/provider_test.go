@@ -337,6 +337,41 @@ func TestBuildRequestBodyDeepSeekV41UsesMaxAndUpstreamModel(t *testing.T) {
 	}
 }
 
+func TestBuildRequestBodyDeepSeekV41JSONSchemaBecomesJSONObject(t *testing.T) {
+	p := &Provider{baseURL: "https://ws-qnsgk3r40cvpyn30.us-east-1.maas.aliyuncs.com/compatible-mode/v1"}
+	schema := []byte(`{"type":"object"}`)
+	body := p.buildRequestBody(models.DeepSeekV41Flash, textRequest(&modelhubv2.TextOutput{
+		Thinking: modelhubv2.ThinkingMode_THINKING_MODE_DISABLED,
+		ResponseFormat: &modelhubv2.ResponseFormat{
+			Type:       modelhubv2.ResponseFormatType_RESPONSE_FORMAT_TYPE_JSON_SCHEMA,
+			Name:       "outfit_generation",
+			JsonSchema: schema,
+		},
+	}), false)
+	format, ok := body["response_format"].(map[string]any)
+	if !ok || format["type"] != "json_object" {
+		t.Fatalf("response_format = %#v, want json_object", body["response_format"])
+	}
+	if _, exists := format["json_schema"]; exists {
+		t.Fatalf("deepseek must not send json_schema: %#v", format)
+	}
+	if body["reasoning_effort"] != "none" {
+		t.Fatalf("reasoning_effort = %#v, want none", body["reasoning_effort"])
+	}
+
+	other := p.buildRequestBody(models.Qwen37Flash, textRequest(&modelhubv2.TextOutput{
+		ResponseFormat: &modelhubv2.ResponseFormat{
+			Type:       modelhubv2.ResponseFormatType_RESPONSE_FORMAT_TYPE_JSON_SCHEMA,
+			Name:       "outfit_generation",
+			JsonSchema: schema,
+		},
+	}), false)
+	otherFormat, ok := other["response_format"].(map[string]any)
+	if !ok || otherFormat["type"] != "json_schema" {
+		t.Fatalf("other models must keep json_schema, got %#v", other["response_format"])
+	}
+}
+
 func assertNoGLMThinkingType(t *testing.T, body map[string]any) {
 	t.Helper()
 	if _, ok := body["enable_thinking"]; ok {

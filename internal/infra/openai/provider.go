@@ -200,6 +200,13 @@ func (p *Provider) buildRequestBody(model string, request *modelhubv2.GenerateRe
 			case modelhubv2.ResponseFormatType_RESPONSE_FORMAT_TYPE_JSON_OBJECT:
 				body["response_format"] = map[string]any{"type": "json_object"}
 			case modelhubv2.ResponseFormatType_RESPONSE_FORMAT_TYPE_JSON_SCHEMA:
+				// 美东阿里云弗吉尼亚工作空间当前拒绝 deepseek-v4.1-flash 的 json_schema
+				// （This response_format type is unavailable now）。出方案提示词已含 closet_json，
+				// 改发 json_object 能过；结构仍由衣橱解码校验。其他模型继续 strict json_schema。
+				if model == models.DeepSeekV41Flash {
+					body["response_format"] = map[string]any{"type": "json_object"}
+					break
+				}
 				rf := map[string]any{
 					"type": "json_schema",
 					"json_schema": map[string]any{
