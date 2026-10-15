@@ -9,29 +9,18 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-func TestExhibitionFireworksDeepSeekOverlay(t *testing.T) {
+func TestExhibitionDeepSeekUsesExistingAliyunWorkspace(t *testing.T) {
 	raw, err := os.ReadFile("aws-exhibition-fireworks.providers.yaml")
 	if err != nil {
 		t.Fatal(err)
 	}
-	var doc struct {
-		Providers map[string]ProviderConfig `yaml:"providers"`
+	text := string(raw)
+	// 这份说明不能被当成新 provider 合并，否则会盖掉现网密钥或再开一条 Fireworks。
+	if strings.Contains(text, "fireworks") || strings.Contains(text, "api_key:") || strings.Contains(text, "upstream_model:") {
+		t.Fatal("exhibition note must not declare a Fireworks provider or a key")
 	}
-	if err := yaml.Unmarshal(raw, &doc); err != nil {
-		t.Fatal(err)
-	}
-	provider, ok := doc.Providers["fireworks_us_deepseek_v41_flash"]
-	if !ok {
-		t.Fatal("missing fireworks_us_deepseek_v41_flash")
-	}
-	if len(provider.Models) != 1 || provider.Models[0] != models.DeepSeekV41Flash {
-		t.Fatalf("models=%v", provider.Models)
-	}
-	if provider.OpenAI == nil || provider.OpenAI.BaseURL != "https://us.api.fireworks.ai/inference/v1" {
-		t.Fatalf("openai=%#v", provider.OpenAI)
-	}
-	if provider.OpenAI.UpstreamModel != "accounts/fireworks/routers/deepseek-v4p1-flash-us" {
-		t.Fatalf("upstream_model=%q", provider.OpenAI.UpstreamModel)
+	if !strings.Contains(text, "阿里云_MaaS_ws-qnsgk3r40cvpyn30") || !strings.Contains(text, models.DeepSeekV41Flash) {
+		t.Fatal("exhibition note must keep the existing Virginia workspace and public model id")
 	}
 }
 
