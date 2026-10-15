@@ -33,7 +33,7 @@ func TestDockerContextIncludesExampleYAMLForBuilderTests(t *testing.T) {
 		t.Fatal(".dockerignore must re-include config/example.modelHub.yaml for Docker builder tests")
 	}
 	if !strings.Contains(string(raw), "\n!config/aws-exhibition-fireworks.providers.yaml\n") {
-		t.Fatal(".dockerignore must re-include the exhibition Fireworks overlay for Docker builder tests")
+		t.Fatal(".dockerignore must re-include the exhibition DeepSeek note for Docker builder tests")
 	}
 }
 
