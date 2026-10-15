@@ -1,5 +1,6 @@
 // Package vworldimage 承接薇光点亮公网 FLUX 生图：拆衣服、虚拟换衣与体模。
-// 仅将统一协议转换为 VMind-Image 业务接口；参数校验、模型配置与裁剪验收由上游负责。
+// 与 SeeTacloud 上的 FLUX.2-klein-9B OpenAI Bearer 实例分绑；鉴权、LoRA、固定尺寸，以及
+// 有 parse_mask 时的 crop.applied 验收都只在本包，调用方只传 ModelHub 模型 ID 与业务图文。
 package vworldimage
 
 import (
@@ -12,6 +13,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"net/textproto"
+	"strconv"
 	"strings"
 	"time"
 
@@ -23,11 +25,25 @@ import (
 )
 
 const (
-	garmentExtractionPath = "/v2/images/garment_extraction"
-	productGenerationPath = "/v2/images/product_generation"
-	vtonPath              = "/v2/images/vton"
-	bodyModelPath         = "/v2/images/body_model"
-	requestTimeout        = 900 * time.Second
+	garmentExtractionPath = "/v1/images/garment_extraction"
+	editsPath             = "/v1/images/edits"
+	bodyModelPath         = "/v1/images/body_model"
+
+	// 上游兼容字段：业务能力由路径和 lora_name 决定，不能把 VWorld 模型 ID 原样下发。
+	upstreamCompatibleModel = "FLUX.2-klein-9B"
+	loraStrength            = "1.0"
+	responseFormat          = "b64_json"
+
+	loraClothGen  = "cloth_gen"
+	loraVTON      = "vton"
+	loraBodyModel = "body_model"
+
+	garmentSize   = "1024x1024"
+	vtonSize      = "768x1024"
+	bodyModelSize = "1024x1536"
+
+	// 同步长请求；文档上限 900s，避免默认 HTTP 客户端过早切断。
+	requestTimeout = 900 * time.Second
 )
 
 // Provider 只实现 ImageProvider。两个模型共用同一个入口，靠路径与 LoRA 分流。
@@ -94,7 +110,7 @@ func (p *Provider) currentBaseURL() string {
 	return next
 }
 
-// GenerateImage 按真实模型 ID 选择业务接口，不下发推理配置。
+// GenerateImage 按真实模型 ID 选择拆衣服、虚拟换衣或体模；尺寸与 LoRA 固定在供应商内，不受调用方 AspectRatio 换算影响。
 func (p *Provider) GenerateImage(ctx context.Context, model string, request *modelhubv2.GenerateRequest) (*modelhubv2.GenerateEvent, error) {
 	if request == nil {
 		return nil, provider.NotAttempted(provider.ErrorInvalidArgument, "generate request is required")
@@ -113,10 +129,11 @@ func (p *Provider) GenerateImage(ctx context.Context, model string, request *mod
 
 func (p *Provider) generateGarmentExtraction(ctx context.Context, request *modelhubv2.GenerateRequest) (*modelhubv2.GenerateEvent, error) {
 	images := provider.ImageMedias(request.GetInput())
+	// 一张图是录衣原图。两张图是 OOTD：人物裁图在前，整张人体解析标签图在后。不能把单件遮罩当成第二张图。
 	if len(images) < 1 || len(images) > 2 {
-		return nil, provider.NotAttempted(provider.ErrorInvalidArgument, "VWorld_wardrobe-1.0 requires source image and optionally parser mask")
+		return nil, provider.NotAttempted(provider.ErrorInvalidArgument, "VWorld_wardrobe-1.0 requires the source image and optionally the human-parser mask")
 	}
-	source, mime, err := inlineImage(images[0])
+	imageBytes, mimeType, err := inlineImage(images[0])
 	if err != nil {
 		return nil, err
 	}
@@ -124,34 +141,70 @@ func (p *Provider) generateGarmentExtraction(ctx context.Context, request *model
 	if err != nil {
 		return nil, err
 	}
-	fields := map[string]string{"garment_name": meta.Name, "garment_role": meta.GarmentRole}
-	uploads := []imageUpload{{data: source, mimeType: mime, filename: "source.png"}}
-	path := productGenerationPath
-	// Route by the supplied parser payload, without inferring roles or checking taxonomy.
-	if len(images) == 2 || meta.ParseLabels != nil {
-		path = garmentExtractionPath
-		if meta.ParseLabels != nil {
-			labels, err := json.Marshal(meta.ParseLabels)
-			if err != nil {
-				return nil, provider.WrapNotAttempted(provider.ErrorInvalidArgument, "encode parse_labels", err)
-			}
-			fields["parse_labels"] = string(labels)
-		}
-		if len(images) == 2 {
-			mask, mime, err := inlineImage(images[1])
-			if err != nil {
-				return nil, err
-			}
-			uploads = append(uploads, imageUpload{field: "parse_mask", filename: "human_parse_labels.png", data: mask, mimeType: mime})
-		}
+	hasMask := len(images) == 2
+	hasLabels := len(meta.ParseLabels) > 0
+	if hasMask != hasLabels {
+		return nil, provider.NotAttempted(provider.ErrorInvalidArgument, "VWorld_wardrobe-1.0 parse mask and parse_labels must be provided together")
 	}
-	raw, err := p.doMultipart(ctx, path, fields, uploads)
+	// use_crop 跟输入走：有 parse_mask 才裁区域；录衣单图是已主体商品图，强制裁切只会 applied=false。
+	useCrop := hasMask
+	// 显式角色原样下发，由上游解释和校验。未传角色的旧请求仍转换解析槽位，
+	// 避免标签裁图在没有角色时退回错误区域；不按衣橱类目或名称猜角色。
+	role, slotOK := garmentRoleFromSlot(meta.InventorySlot)
+	if useCrop && meta.GarmentRole == "" && !slotOK {
+		return nil, provider.NotAttemptedf(provider.ErrorInvalidArgument, "VWorld_wardrobe-1.0 crop requires a supported inventory_slot, got %q", meta.InventorySlot)
+	}
+	if meta.GarmentRole != "" {
+		role = meta.GarmentRole
+	}
+
+	fields := map[string]string{
+		"model":           upstreamCompatibleModel,
+		"n":               "1",
+		"response_format": responseFormat,
+		"lora_name":       loraClothGen,
+		"lora_strength":   loraStrength,
+		"use_crop":        strconv.FormatBool(useCrop),
+		"garment_name":    meta.Name,
+		"size":            garmentSize,
+	}
+	// Single-product registration forwards its explicit product role without enabling crop.
+	// Explicit roles are opaque upstream values; the model service owns validation.
+	// Only legacy callers without a role use the existing parser-slot conversion.
+	if role != "" {
+		fields["garment_role"] = role
+	}
+	uploads := []imageUpload{{data: imageBytes, mimeType: mimeType}}
+	if hasMask {
+		maskBytes, maskMIME, err := inlineImage(images[1])
+		if err != nil {
+			return nil, err
+		}
+		// 字段名和文件名对齐 Muse：人物图走 image，标签图走 parse_mask，类别表走 parse_labels。
+		uploads[0].filename = "source.png"
+		labels, err := json.Marshal(meta.ParseLabels)
+		if err != nil {
+			return nil, provider.WrapNotAttempted(provider.ErrorInvalidArgument, p.name+" encode parse_labels failed", err)
+		}
+		fields["parse_labels"] = string(labels)
+		uploads = append(uploads, imageUpload{
+			field:    "parse_mask",
+			filename: "human_parse_labels.png",
+			data:     maskBytes,
+			mimeType: maskMIME,
+		})
+	}
+	raw, err := p.doMultipart(ctx, garmentExtractionPath, fields, uploads)
 	if err != nil {
 		return nil, err
 	}
 	parsed, err := decodeImageResponse(raw)
 	if err != nil {
 		return nil, err
+	}
+	// 开了裁切却 applied=false 是整图/解析失败回退，不能当拆衣服成功；未请求裁切则不看 applied。
+	if useCrop && (parsed.Crop == nil || !parsed.Crop.Applied) {
+		return nil, provider.New(provider.ErrorInvalidResponse, p.name+" garment extraction crop.applied is not true")
 	}
 	return imageEvent(parsed.Data)
 }
@@ -161,21 +214,29 @@ func (p *Provider) generateVTON(ctx context.Context, request *modelhubv2.Generat
 	if len(images) != 2 {
 		return nil, provider.NotAttempted(provider.ErrorInvalidArgument, "VWorld_outfit_1.0 requires person image then garment collage")
 	}
+	prompt := strings.TrimSpace(provider.JoinedText(request.GetInput()))
+	if prompt == "" {
+		return nil, provider.NotAttempted(provider.ErrorInvalidArgument, "VWorld_outfit_1.0 requires a rendered prompt")
+	}
 	uploads := make([]imageUpload, 0, 2)
-	for index, media := range images {
-		data, mime, err := inlineImage(media)
+	for _, media := range images {
+		data, mimeType, err := inlineImage(media)
 		if err != nil {
 			return nil, err
 		}
-		field := "person_image"
-		if index == 1 {
-			field = "garment_image"
-		}
-		uploads = append(uploads, imageUpload{field: field, data: data, mimeType: mime})
+		uploads = append(uploads, imageUpload{data: data, mimeType: mimeType})
 	}
-	// Preserve prompt whitespace; the model service validates without rewriting it.
-	fields := map[string]string{"prompt": provider.JoinedText(request.GetInput())}
-	raw, err := p.doMultipart(ctx, vtonPath, fields, uploads)
+	fields := map[string]string{
+		"model":           upstreamCompatibleModel,
+		"prompt":          prompt,
+		"n":               "1",
+		"response_format": responseFormat,
+		"lora_name":       loraVTON,
+		"lora_strength":   loraStrength,
+		// 强制 768x1024；不能沿用 OpenAI 把 3:4/1K 换成 1024x1536 的规则。
+		"size": vtonSize,
+	}
+	raw, err := p.doMultipart(ctx, editsPath, fields, uploads)
 	if err != nil {
 		return nil, err
 	}
@@ -186,6 +247,9 @@ func (p *Provider) generateVTON(ctx context.Context, request *modelhubv2.Generat
 	return imageEvent(parsed.Data)
 }
 
+// generateBodyModel 只打体模专用路径。上游自己带提示词和 1024x1536，
+// 调用方的文字、宽高比和 image_size 都不能改写；多一张脸锚点也会被上游拒成 400。
+// 性别来自 Input.model_traits 的 JSON，不读文本 part；非法值在出站前失败。
 func (p *Provider) generateBodyModel(ctx context.Context, request *modelhubv2.GenerateRequest) (*modelhubv2.GenerateEvent, error) {
 	images := provider.ImageMedias(request.GetInput())
 	if len(images) != 1 {
@@ -195,11 +259,19 @@ func (p *Provider) generateBodyModel(ctx context.Context, request *modelhubv2.Ge
 	if err != nil {
 		return nil, err
 	}
-	data, mime, err := inlineImage(images[0])
+	imageBytes, mimeType, err := inlineImage(images[0])
 	if err != nil {
 		return nil, err
 	}
-	raw, err := p.doMultipart(ctx, bodyModelPath, map[string]string{"gender": gender}, []imageUpload{{data: data, mimeType: mime}})
+	fields := map[string]string{
+		"n":               "1",
+		"response_format": responseFormat,
+		"lora_name":       loraBodyModel,
+		"lora_strength":   loraStrength,
+		"size":            bodyModelSize,
+		"gender":          gender,
+	}
+	raw, err := p.doMultipart(ctx, bodyModelPath, fields, []imageUpload{{data: imageBytes, mimeType: mimeType}})
 	if err != nil {
 		return nil, err
 	}
@@ -210,18 +282,24 @@ func (p *Provider) generateBodyModel(ctx context.Context, request *modelhubv2.Ge
 	return imageEvent(parsed.Data)
 }
 
-// Only decode the shared traits envelope. The upstream service owns gender validation.
+// bodyModelGender 只认 model_traits 这份 JSON 里的 gender。
+// 字段是抽象的模型特性袋，其他键留给别的模型；体模不认识的键忽略，缺 gender 或值不是 male/female 则不出站。
 func bodyModelGender(raw string) (string, error) {
-	if strings.TrimSpace(raw) == "" {
-		return "", nil
+	raw = strings.TrimSpace(raw)
+	if raw == "" {
+		return "", provider.NotAttempted(provider.ErrorInvalidArgument, "VWorld_bodymodel_1.0 requires model_traits.gender")
 	}
 	var traits struct {
 		Gender string `json:"gender"`
 	}
 	if err := json.Unmarshal([]byte(raw), &traits); err != nil {
-		return "", provider.WrapNotAttempted(provider.ErrorInvalidArgument, "model_traits must be a JSON object", err)
+		return "", provider.NotAttempted(provider.ErrorInvalidArgument, "VWorld_bodymodel_1.0 model_traits must be a JSON object")
 	}
-	return traits.Gender, nil
+	gender := strings.ToLower(strings.TrimSpace(traits.Gender))
+	if gender != "male" && gender != "female" {
+		return "", provider.NotAttempted(provider.ErrorInvalidArgument, "VWorld_bodymodel_1.0 model_traits.gender must be male or female")
+	}
+	return gender, nil
 }
 
 type imageUpload struct {
@@ -302,18 +380,65 @@ func (p *Provider) doMultipart(ctx context.Context, path string, fields map[stri
 }
 
 type garmentMeta struct {
-	Name        string            `json:"garment_name"`
-	GarmentRole string            `json:"garment_role"`
-	ParseLabels map[string]string `json:"parse_labels"`
+	Name          string
+	InventorySlot string
+	GarmentRole   string
+	ParseLabels   map[string]string
 }
 
-// Decode the transport envelope only; role/name/label validation belongs to VMind-Image.
+// parseGarmentMeta 只认衣橱为拆衣服模型准备的 JSON；白底中文文案不能进 garment_extraction。
+// garment_role is an optional explicit VMind product role for registration.
+// Explicit garment_role values pass through unchanged; validation belongs to VMind-Image.
+// inventory_slot is used only as a compatibility fallback when no role is supplied.
+// garment_category is not used to infer a role.
+// parse_labels 是类别编号到名称，和标签图一起交给上游裁区域。没有这张图时不能自己补。
 func parseGarmentMeta(text string) (garmentMeta, error) {
-	var meta garmentMeta
-	if err := json.Unmarshal([]byte(text), &meta); err != nil {
-		return meta, provider.WrapNotAttempted(provider.ErrorInvalidArgument, "VWorld_wardrobe-1.0 text part must be JSON metadata", err)
+	text = strings.TrimSpace(text)
+	if text == "" {
+		return garmentMeta{}, provider.NotAttempted(provider.ErrorInvalidArgument, "VWorld_wardrobe-1.0 requires garment_name in text part")
 	}
-	return meta, nil
+	var payload struct {
+		GarmentName   string            `json:"garment_name"`
+		InventorySlot string            `json:"inventory_slot"`
+		GarmentRole   string            `json:"garment_role"`
+		ParseLabels   map[string]string `json:"parse_labels"`
+	}
+	if err := json.Unmarshal([]byte(text), &payload); err != nil {
+		return garmentMeta{}, provider.NotAttempted(provider.ErrorInvalidArgument, "VWorld_wardrobe-1.0 text part must be JSON with garment_name")
+	}
+	name := strings.TrimSpace(payload.GarmentName)
+	if name == "" {
+		return garmentMeta{}, provider.NotAttempted(provider.ErrorInvalidArgument, "VWorld_wardrobe-1.0 garment_name is required")
+	}
+	return garmentMeta{Name: name, InventorySlot: strings.TrimSpace(payload.InventorySlot), GarmentRole: payload.GarmentRole, ParseLabels: payload.ParseLabels}, nil
+}
+
+// garmentRoleFromSlot 把人体解析槽位换成上游拆衣服已经接受的 garment_role。
+// 这些 role 是本接口原先按品类根下发的值：top/dress 对应 tops、dresses 的 clothing::top/full，
+// skirt/pants 对应 bottoms 的 clothing::bottom，feet 对应 footwear 的 shoes，bag/belt 对应同名 role。
+// 配饰沿用上游按部位细分的 accessory::*：glasses 是 eye，hat 是 head，scarf 是 neck。
+// 只认解析槽位本身。footwear、鞋、shoes、叶子 path 都不是槽位。
+func garmentRoleFromSlot(slot string) (string, bool) {
+	switch strings.ToLower(strings.TrimSpace(slot)) {
+	case "top", "dress":
+		return "clothing::top/full", true
+	case "skirt", "pants":
+		return "clothing::bottom", true
+	case "feet":
+		return "shoes", true
+	case "bag":
+		return "bag", true
+	case "belt":
+		return "belt", true
+	case "glasses":
+		return "accessory::eye", true
+	case "hat":
+		return "accessory::head", true
+	case "scarf":
+		return "accessory::neck", true
+	default:
+		return "", false
+	}
 }
 
 func inlineImage(media *modelhubv2.Media) ([]byte, string, error) {

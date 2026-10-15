@@ -10,6 +10,7 @@ import (
 	"image/color"
 	"image/png"
 	"io"
+	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -32,115 +33,367 @@ func pngBytes(t *testing.T) []byte {
 	return buf.Bytes()
 }
 
-func TestMinimalBusinessContracts(t *testing.T) {
-	source := pngBytes(t)
-	prompt := "  try this look\nkeep whitespace  "
-	cases := []struct {
-		name, model, path string
-		request           *modelhubv2.GenerateRequest
-		fields            map[string]string
-		files             map[string][]byte
-	}{
-		{"product", models.VWorldWardrobe10, productGenerationPath,
-			wardrobeRequest(source, `{"garment_name":"White shirt","garment_role":"clothing::top/full"}`),
-			map[string]string{"garment_name": "White shirt", "garment_role": "clothing::top/full"}, map[string][]byte{"image": source}},
-		{"extraction", models.VWorldWardrobe10, garmentExtractionPath,
-			wardrobeRequest(source, `{"garment_name":"shoes","garment_role":"shoes","parse_labels":{"15":"feet"}}`, []byte("mask")),
-			map[string]string{"garment_name": "shoes", "garment_role": "shoes", "parse_labels": `{"15":"feet"}`}, map[string][]byte{"image": source, "parse_mask": []byte("mask")}},
-		{"vton", models.VWorldOutfit10, vtonPath, outfitRequest(source, []byte("garment"), prompt),
-			map[string]string{"prompt": prompt}, map[string][]byte{"person_image": source, "garment_image": []byte("garment")}},
-	}
-	body := wardrobeRequest(source, "caller prompt must not be sent")
-	body.Input.ModelTraits = `{"gender":"female"}`
-	cases = append(cases, struct {
-		name, model, path string
-		request           *modelhubv2.GenerateRequest
-		fields            map[string]string
-		files             map[string][]byte
-	}{
-		"body", models.VWorldBodyModel10, bodyModelPath, body, map[string]string{"gender": "female"}, map[string][]byte{"image": source},
-	})
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			// Output hints from generic clients must not become model-side controls.
-			tc.request.Output = &modelhubv2.OutputSpec{Kind: &modelhubv2.OutputSpec_Image{Image: &modelhubv2.ImageOutput{AspectRatio: strPtr("1:1"), ImageSize: strPtr("4K")}}}
-			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				if r.URL.Path != tc.path {
-					t.Errorf("path=%s want %s", r.URL.Path, tc.path)
-				}
-				user, pass, ok := r.BasicAuth()
-				if !ok || user != "wgdl" || pass != "secret" {
-					t.Error("missing upstream auth")
-				}
-				if err := r.ParseMultipartForm(8 << 20); err != nil {
-					t.Error(err)
-					return
-				}
-				if len(r.MultipartForm.Value) != len(tc.fields) {
-					t.Errorf("unexpected parameters: %#v", r.MultipartForm.Value)
-				}
-				for field, want := range tc.fields {
-					if r.FormValue(field) != want {
-						t.Errorf("%s=%q want %q", field, r.FormValue(field), want)
-					}
-				}
-				if len(r.MultipartForm.File) != len(tc.files) {
-					t.Errorf("unexpected uploads: %#v", r.MultipartForm.File)
-				}
-				for field, want := range tc.files {
-					files := r.MultipartForm.File[field]
-					if len(files) != 1 {
-						t.Errorf("%s count=%d", field, len(files))
-						continue
-					}
-					f, err := files[0].Open()
-					if err != nil {
-						t.Error(err)
-						continue
-					}
-					got, err := io.ReadAll(f)
-					f.Close()
-					if err != nil || !bytes.Equal(got, want) {
-						t.Errorf("%s bytes mismatch: %v", field, err)
-					}
-				}
-				json.NewEncoder(w).Encode(map[string]any{"data": []map[string]string{{"b64_json": base64.StdEncoding.EncodeToString(source)}}})
-			}))
-			defer server.Close()
-			event, err := newTestProvider(t, server.URL).GenerateImage(context.Background(), tc.model, tc.request)
-			if err != nil {
-				t.Fatal(err)
-			}
-			if !bytes.Equal(event.GetItems()[0].GetImage().GetData(), source) {
-				t.Fatal("output mismatch")
-			}
+func TestGarmentExtractionContract(t *testing.T) {
+	src := pngBytes(t)
+	out := pngBytes(t)
+	var gotAuth string
+	var gotImages [][]byte
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/v1/images/garment_extraction" {
+			t.Fatalf("path = %q", r.URL.Path)
+		}
+		gotAuth = r.Header.Get("Authorization")
+		if err := r.ParseMultipartForm(8 << 20); err != nil {
+			t.Fatal(err)
+		}
+		if r.FormValue("model") != upstreamCompatibleModel {
+			t.Fatalf("model = %q", r.FormValue("model"))
+		}
+		if r.FormValue("lora_name") != loraClothGen || r.FormValue("lora_strength") != loraStrength {
+			t.Fatalf("lora = %q/%q", r.FormValue("lora_name"), r.FormValue("lora_strength"))
+		}
+		// 单图无 parse_mask：录衣商品图路径，不得强制裁切。只有 garment_category 也不能带出 garment_role。
+		if r.FormValue("use_crop") != "false" || r.FormValue("size") != garmentSize || r.FormValue("response_format") != responseFormat || r.FormValue("n") != "1" {
+			t.Fatalf("form = %#v", r.Form)
+		}
+		if r.FormValue("garment_name") != "白色衬衫" || r.Form.Has("garment_role") {
+			t.Fatalf("garment fields name=%q role=%q", r.FormValue("garment_name"), r.FormValue("garment_role"))
+		}
+		if r.Form.Has("prompt") || r.Form.Has("parse_mask") || r.Form.Has("parse_labels") {
+			t.Fatal("garment_extraction must not send prompt/parse_mask/parse_labels")
+		}
+		if r.Form.Has("negative_prompt") {
+			t.Fatal("unexpected negative_prompt")
+		}
+		files := r.MultipartForm.File["image"]
+		if len(files) != 1 {
+			t.Fatalf("image count = %d", len(files))
+		}
+		f, err := files[0].Open()
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer f.Close()
+		data, err := io.ReadAll(f)
+		if err != nil {
+			t.Fatal(err)
+		}
+		gotImages = append(gotImages, data)
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"data": []map[string]string{{"b64_json": base64.StdEncoding.EncodeToString(out)}},
+			"crop": map[string]any{"applied": true},
 		})
+	}))
+	defer server.Close()
+
+	p := newTestProvider(t, server.URL)
+	event, err := p.GenerateImage(context.Background(), models.VWorldWardrobe10, wardrobeRequest(src, `{"garment_name":"白色衬衫","garment_category":"tops.shirts"}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	user, pass, ok := parseBasicAuth(gotAuth)
+	if !ok || user != "wgdl" || pass != "secret" {
+		t.Fatalf("basic auth = %q", gotAuth)
+	}
+	if len(gotImages) != 1 || !bytes.Equal(gotImages[0], src) {
+		t.Fatal("outfit image not forwarded")
+	}
+	if got := event.GetItems()[0].GetImage().GetData(); !bytes.Equal(got, out) {
+		t.Fatalf("output len=%d", len(got))
 	}
 }
 
-func TestServerOwnsMissingAndInvalidBusinessFields(t *testing.T) {
-	tests := []struct {
-		model   string
-		request *modelhubv2.GenerateRequest
-	}{
-		{models.VWorldWardrobe10, wardrobeRequest(pngBytes(t), `{"garment_name":"","garment_role":"future-role"}`)},
-		{models.VWorldWardrobe10, wardrobeRequest(pngBytes(t), `{"garment_name":"shoe"}`, []byte("mask"))},
-		{models.VWorldWardrobe10, wardrobeRequest(pngBytes(t), `{"garment_name":"shoe","parse_labels":{"15":"feet"}}`)},
-		{models.VWorldBodyModel10, wardrobeRequest(pngBytes(t), "")},
-		{models.VWorldOutfit10, outfitRequest(pngBytes(t), pngBytes(t), " ")},
-	}
-	for _, tc := range tests {
-		hits := 0
-		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			hits++
-			w.WriteHeader(400)
-			w.Write([]byte(`{"error":{"code":"invalid_request","field":"test","message":"model validation rejected"}}`))
-		}))
-		_, err := newTestProvider(t, server.URL).GenerateImage(context.Background(), tc.model, tc.request)
-		server.Close()
-		if hits != 1 || err == nil || provider.IsNotAttempted(err) || !strings.Contains(err.Error(), "model validation rejected") {
-			t.Fatalf("hits=%d err=%v", hits, err)
+func TestGarmentExtractionForwardsParserMask(t *testing.T) {
+	person := pngBytes(t)
+	mask := []byte{1, 2, 3, 4}
+	out := pngBytes(t)
+	var gotImage, gotMask []byte
+	var gotImageName, gotMaskName string
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if err := r.ParseMultipartForm(8 << 20); err != nil {
+			t.Fatal(err)
 		}
+		if r.Form.Has("prompt") {
+			t.Fatal("prompt must not be sent")
+		}
+		if r.FormValue("use_crop") != "true" {
+			t.Fatalf("use_crop = %q", r.FormValue("use_crop"))
+		}
+		if r.FormValue("garment_name") != "白色衬衫" || r.FormValue("garment_role") != "clothing::top/full" {
+			t.Fatalf("garment fields name=%q role=%q", r.FormValue("garment_name"), r.FormValue("garment_role"))
+		}
+		if r.FormValue("parse_labels") != `{"1":"top","4":"left shoe"}` {
+			t.Fatalf("parse_labels = %q", r.FormValue("parse_labels"))
+		}
+		images := r.MultipartForm.File["image"]
+		masks := r.MultipartForm.File["parse_mask"]
+		if len(images) != 1 || len(masks) != 1 {
+			t.Fatalf("files image=%d mask=%d", len(images), len(masks))
+		}
+		gotImageName = images[0].Filename
+		gotMaskName = masks[0].Filename
+		read := func(file *multipart.FileHeader) []byte {
+			t.Helper()
+			f, err := file.Open()
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer f.Close()
+			data, err := io.ReadAll(f)
+			if err != nil {
+				t.Fatal(err)
+			}
+			return data
+		}
+		gotImage = read(images[0])
+		gotMask = read(masks[0])
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"data": []map[string]string{{"b64_json": base64.StdEncoding.EncodeToString(out)}},
+			"crop": map[string]any{"applied": true},
+		})
+	}))
+	defer server.Close()
+
+	p := newTestProvider(t, server.URL)
+	// garment_category 故意写成鞋类叶子：裁图角色只跟 inventory_slot，不能被类目改回去。
+	_, err := p.GenerateImage(context.Background(), models.VWorldWardrobe10, wardrobeRequest(person, `{"garment_name":"白色衬衫","garment_category":"footwear.sneakers","inventory_slot":"top","parse_labels":{"4":"left shoe","1":"top"}}`, mask))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if gotImageName != "source.png" || gotMaskName != "human_parse_labels.png" {
+		t.Fatalf("filenames image=%q mask=%q", gotImageName, gotMaskName)
+	}
+	if !bytes.Equal(gotImage, person) || !bytes.Equal(gotMask, mask) {
+		t.Fatal("person image or parse mask was not forwarded")
+	}
+}
+
+func TestGarmentExtractionRejectsMaskWithoutLabels(t *testing.T) {
+	p := newTestProvider(t, "http://127.0.0.1:1")
+	_, err := p.GenerateImage(context.Background(), models.VWorldWardrobe10, wardrobeRequest(pngBytes(t), `{"garment_name":"白色衬衫"}`, []byte("mask")))
+	if err == nil || !strings.Contains(err.Error(), "parse mask and parse_labels") {
+		t.Fatalf("err = %v", err)
+	}
+}
+
+func TestGarmentExtractionFailsWhenCropNotApplied(t *testing.T) {
+	src := pngBytes(t)
+	mask := []byte{1, 2, 3, 4}
+	out := pngBytes(t)
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"data": []map[string]string{{"b64_json": base64.StdEncoding.EncodeToString(out)}},
+			"crop": map[string]any{"applied": false},
+		})
+	}))
+	defer server.Close()
+
+	// 有 parse_mask 时必须裁切成功；applied=false 不能当拆衣服成功。
+	p := newTestProvider(t, server.URL)
+	_, err := p.GenerateImage(context.Background(), models.VWorldWardrobe10, wardrobeRequest(src, `{"garment_name":"白衬衫","inventory_slot":"top","parse_labels":{"1":"top"}}`, mask))
+	if err == nil || !strings.Contains(err.Error(), "crop.applied") {
+		t.Fatalf("err = %v", err)
+	}
+}
+
+func TestGarmentExtractionAllowsUnappliedCropWithoutMask(t *testing.T) {
+	src := pngBytes(t)
+	out := pngBytes(t)
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if err := r.ParseMultipartForm(8 << 20); err != nil {
+			t.Fatal(err)
+		}
+		if r.FormValue("use_crop") != "false" {
+			t.Fatalf("use_crop = %q", r.FormValue("use_crop"))
+		}
+		// 只有类目、没有人体槽位：单图仍可生，但不能因此带上 garment_role。
+		if r.Form.Has("garment_role") {
+			t.Fatalf("category must not set garment_role=%q", r.FormValue("garment_role"))
+		}
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"data": []map[string]string{{"b64_json": base64.StdEncoding.EncodeToString(out)}},
+			"crop": map[string]any{"applied": false},
+		})
+	}))
+	defer server.Close()
+
+	p := newTestProvider(t, server.URL)
+	event, err := p.GenerateImage(context.Background(), models.VWorldWardrobe10, wardrobeRequest(src, `{"garment_name":"白衬衫","garment_category":"tops"}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := event.GetItems()[0].GetImage().GetData(); !bytes.Equal(got, out) {
+		t.Fatalf("output len=%d", len(got))
+	}
+}
+
+func TestGarmentExtractionOmitsUnmappedRole(t *testing.T) {
+	src := pngBytes(t)
+	out := pngBytes(t)
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if err := r.ParseMultipartForm(8 << 20); err != nil {
+			t.Fatal(err)
+		}
+		if r.Form.Has("garment_role") {
+			t.Fatalf("unexpected garment_role=%q", r.FormValue("garment_role"))
+		}
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"data": []map[string]string{{"b64_json": base64.StdEncoding.EncodeToString(out)}},
+			"crop": map[string]any{"applied": true},
+		})
+	}))
+	defer server.Close()
+
+	p := newTestProvider(t, server.URL)
+	if _, err := p.GenerateImage(context.Background(), models.VWorldWardrobe10, wardrobeRequest(src, `{"garment_name":"项链","garment_category":"jewelry.necklaces"}`)); err != nil {
+		t.Fatal(err)
+	}
+	// 无裁切时不支持的槽位也不发明 role，并且不因此失败。
+	if _, err := p.GenerateImage(context.Background(), models.VWorldWardrobe10, wardrobeRequest(src, `{"garment_name":"项链","inventory_slot":"necklace","garment_category":"jewelry.necklaces"}`)); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestVTONEditsContract(t *testing.T) {
+	person := pngBytes(t)
+	garment := pngBytes(t)
+	out := pngBytes(t)
+	var gotAuth string
+	var filenames []string
+	var payloads [][]byte
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/v1/images/edits" {
+			t.Fatalf("path = %q", r.URL.Path)
+		}
+		gotAuth = r.Header.Get("Authorization")
+		if err := r.ParseMultipartForm(8 << 20); err != nil {
+			t.Fatal(err)
+		}
+		if r.FormValue("model") != upstreamCompatibleModel {
+			t.Fatalf("model = %q", r.FormValue("model"))
+		}
+		if r.FormValue("lora_name") != loraVTON || r.FormValue("lora_strength") != loraStrength {
+			t.Fatalf("lora = %q/%q", r.FormValue("lora_name"), r.FormValue("lora_strength"))
+		}
+		if r.FormValue("size") != vtonSize || r.FormValue("response_format") != responseFormat || r.FormValue("n") != "1" {
+			t.Fatalf("form = %#v", r.Form)
+		}
+		if r.FormValue("prompt") != "try this look" {
+			t.Fatalf("prompt = %q", r.FormValue("prompt"))
+		}
+		if r.Form.Has("negative_prompt") {
+			t.Fatal("must not depend on negative_prompt")
+		}
+		if r.FormValue("size") == "1024x1536" {
+			t.Fatal("must not reuse OpenAI 3:4→1024x1536 conversion")
+		}
+		files := r.MultipartForm.File["image"]
+		if len(files) != 2 {
+			t.Fatalf("image count = %d", len(files))
+		}
+		for _, fh := range files {
+			filenames = append(filenames, fh.Filename)
+			f, err := fh.Open()
+			if err != nil {
+				t.Fatal(err)
+			}
+			data, err := io.ReadAll(f)
+			_ = f.Close()
+			if err != nil {
+				t.Fatal(err)
+			}
+			payloads = append(payloads, data)
+		}
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"data": []map[string]string{{"b64_json": base64.StdEncoding.EncodeToString(out)}},
+		})
+	}))
+	defer server.Close()
+
+	p := newTestProvider(t, server.URL)
+	event, err := p.GenerateImage(context.Background(), models.VWorldOutfit10, outfitRequest(person, garment, "try this look"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	user, pass, ok := parseBasicAuth(gotAuth)
+	if !ok || user != "wgdl" || pass != "secret" {
+		t.Fatalf("basic auth = %q", gotAuth)
+	}
+	if len(payloads) != 2 || !bytes.Equal(payloads[0], person) || !bytes.Equal(payloads[1], garment) {
+		t.Fatalf("image order/content wrong filenames=%v", filenames)
+	}
+	if got := event.GetItems()[0].GetImage().GetData(); !bytes.Equal(got, out) {
+		t.Fatalf("output len=%d", len(got))
+	}
+}
+
+func TestBodyModelContract(t *testing.T) {
+	person := pngBytes(t)
+	out := pngBytes(t)
+	var gotAuth string
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/v1/images/body_model" {
+			t.Fatalf("path = %q", r.URL.Path)
+		}
+		gotAuth = r.Header.Get("Authorization")
+		if err := r.ParseMultipartForm(8 << 20); err != nil {
+			t.Fatal(err)
+		}
+		if r.Form.Has("model") || r.Form.Has("prompt") || r.Form.Has("seed") {
+			t.Fatalf("must not forward model/prompt/seed: %#v", r.Form)
+		}
+		if r.FormValue("lora_name") != loraBodyModel || r.FormValue("lora_strength") != loraStrength {
+			t.Fatalf("lora = %q/%q", r.FormValue("lora_name"), r.FormValue("lora_strength"))
+		}
+		if r.FormValue("size") != bodyModelSize || r.FormValue("response_format") != responseFormat || r.FormValue("n") != "1" || r.FormValue("gender") != "female" {
+			t.Fatalf("form = %#v", r.Form)
+		}
+		if r.FormValue("size") == vtonSize {
+			t.Fatal("must not reuse vton size")
+		}
+		files := r.MultipartForm.File["image"]
+		if len(files) != 1 {
+			t.Fatalf("image count = %d", len(files))
+		}
+		f, err := files[0].Open()
+		if err != nil {
+			t.Fatal(err)
+		}
+		data, err := io.ReadAll(f)
+		_ = f.Close()
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !bytes.Equal(data, person) {
+			t.Fatal("person bytes were not forwarded")
+		}
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"data": []map[string]string{{"b64_json": base64.StdEncoding.EncodeToString(out)}},
+		})
+	}))
+	defer server.Close()
+
+	p := newTestProvider(t, server.URL)
+	event, err := p.GenerateImage(context.Background(), models.VWorldBodyModel10, outfitRequest(person, nil, "caller prompt must be dropped"))
+	if err == nil {
+		t.Fatal("two images must be rejected before HTTP")
+	}
+	req := wardrobeRequest(person, "caller prompt must be dropped")
+	req.Input.ModelTraits = `{"gender":"female","unused":"later"}`
+	req.Output = &modelhubv2.OutputSpec{Kind: &modelhubv2.OutputSpec_Image{Image: &modelhubv2.ImageOutput{
+		AspectRatio: strPtr("3:4"),
+		ImageSize:   strPtr("2K"),
+	}}}
+	event, err = p.GenerateImage(context.Background(), models.VWorldBodyModel10, req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	user, pass, ok := parseBasicAuth(gotAuth)
+	if !ok || user != "wgdl" || pass != "secret" {
+		t.Fatalf("basic auth = %q", gotAuth)
+	}
+	if got := event.GetItems()[0].GetImage().GetData(); !bytes.Equal(got, out) {
+		t.Fatalf("output len=%d", len(got))
 	}
 }
 
@@ -162,6 +415,9 @@ func TestRejectsWrongImageCountsAndUnknownModel(t *testing.T) {
 	if _, err := p.GenerateImage(context.Background(), models.VWorldBodyModel10, &modelhubv2.GenerateRequest{}); err == nil {
 		t.Fatal("expected body model missing image error")
 	}
+	if _, err := p.GenerateImage(context.Background(), models.VWorldBodyModel10, wardrobeRequest(pngData, "prompt")); err == nil {
+		t.Fatal("expected body model missing gender error")
+	}
 }
 
 func TestNewRequiresAuth(t *testing.T) {
@@ -169,6 +425,118 @@ func TestNewRequiresAuth(t *testing.T) {
 	var providerErr *provider.Error
 	if !errors.As(err, &providerErr) || providerErr.Kind != provider.ErrorConfiguration {
 		t.Fatalf("err = %v", err)
+	}
+}
+
+func TestGarmentRoleFromSlot(t *testing.T) {
+	supported := map[string]string{
+		"top":     "clothing::top/full",
+		"dress":   "clothing::top/full",
+		"skirt":   "clothing::bottom",
+		"pants":   "clothing::bottom",
+		"feet":    "shoes",
+		"FEET":    "shoes",
+		"bag":     "bag",
+		"belt":    "belt",
+		"glasses": "accessory::eye",
+		"hat":     "accessory::head",
+		"scarf":   "accessory::neck",
+	}
+	for slot, want := range supported {
+		got, ok := garmentRoleFromSlot(slot)
+		if !ok || got != want {
+			t.Fatalf("slot %q => %q ok=%v, want %q", slot, got, ok, want)
+		}
+	}
+	// 类目根、中文品类和 role 自身都不是解析槽位，不能再当回退。
+	for _, slot := range []string{"", "jewelry", "footwear", "shoes", "tops.shirts", "鞋", "outfit", "left shoe", "accessory::eye"} {
+		if got, ok := garmentRoleFromSlot(slot); ok || got != "" {
+			t.Fatalf("slot %q mapped to %q", slot, got)
+		}
+	}
+}
+
+func TestGarmentExtractionMapsParserSlotsToRole(t *testing.T) {
+	src := pngBytes(t)
+	mask := []byte{1, 2, 3, 4}
+	out := pngBytes(t)
+	cases := []struct {
+		slot string
+		role string
+	}{
+		{slot: "top", role: "clothing::top/full"},
+		{slot: "dress", role: "clothing::top/full"},
+		{slot: "skirt", role: "clothing::bottom"},
+		{slot: "pants", role: "clothing::bottom"},
+		{slot: "feet", role: "shoes"},
+		{slot: "bag", role: "bag"},
+		{slot: "belt", role: "belt"},
+		{slot: "glasses", role: "accessory::eye"},
+		{slot: "hat", role: "accessory::head"},
+		{slot: "scarf", role: "accessory::neck"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.slot, func(t *testing.T) {
+			var gotRole string
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				if err := r.ParseMultipartForm(8 << 20); err != nil {
+					t.Fatal(err)
+				}
+				if r.FormValue("use_crop") != "true" {
+					t.Fatalf("use_crop = %q", r.FormValue("use_crop"))
+				}
+				gotRole = r.FormValue("garment_role")
+				_ = json.NewEncoder(w).Encode(map[string]any{
+					"data": []map[string]string{{"b64_json": base64.StdEncoding.EncodeToString(out)}},
+					"crop": map[string]any{"applied": true},
+				})
+			}))
+			defer server.Close()
+			payload, err := json.Marshal(map[string]any{
+				"garment_name":     "单品",
+				"inventory_slot":   tc.slot,
+				"garment_category": "tops.shirts",
+				"parse_labels":     map[string]string{"1": tc.slot},
+			})
+			if err != nil {
+				t.Fatal(err)
+			}
+			p := newTestProvider(t, server.URL)
+			if _, err := p.GenerateImage(context.Background(), models.VWorldWardrobe10, wardrobeRequest(src, string(payload), mask)); err != nil {
+				t.Fatal(err)
+			}
+			if gotRole != tc.role {
+				t.Fatalf("garment_role = %q, want %q", gotRole, tc.role)
+			}
+		})
+	}
+}
+
+func TestGarmentExtractionCropRejectsSlotBeforeHTTP(t *testing.T) {
+	src := pngBytes(t)
+	mask := []byte{1, 2, 3, 4}
+	hits := 0
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		hits++
+		http.Error(w, "upstream must not be called", http.StatusInternalServerError)
+	}))
+	defer server.Close()
+	p := newTestProvider(t, server.URL)
+	texts := []string{
+		`{"garment_name":"白衬衫","garment_category":"tops.shirts","parse_labels":{"1":"top"}}`,
+		`{"garment_name":"白鞋","inventory_slot":"","garment_category":"footwear.sneakers","parse_labels":{"4":"feet"}}`,
+		`{"garment_name":"鞋","inventory_slot":"shoes","garment_category":"鞋","parse_labels":{"4":"feet"}}`,
+		`{"garment_name":"鞋","inventory_slot":"footwear","parse_labels":{"4":"feet"}}`,
+		`{"garment_name":"项链","inventory_slot":"necklace","parse_labels":{"1":"necklace"}}`,
+	}
+	for _, text := range texts {
+		_, err := p.GenerateImage(context.Background(), models.VWorldWardrobe10, wardrobeRequest(src, text, mask))
+		if err == nil || !provider.IsNotAttempted(err) || !strings.Contains(err.Error(), "inventory_slot") {
+			t.Fatalf("text %s err = %v", text, err)
+		}
+	}
+	if hits != 0 {
+		t.Fatalf("upstream calls = %d", hits)
 	}
 }
 

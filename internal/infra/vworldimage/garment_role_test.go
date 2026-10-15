@@ -20,7 +20,7 @@ func TestRegistrationForwardsExplicitRoleWithoutCrop(t *testing.T) {
 		if err := r.ParseMultipartForm(8 << 20); err != nil {
 			t.Fatal(err)
 		}
-		if r.FormValue("garment_name") != "Black Embellished Sandals" || r.FormValue("garment_role") != "shoes" || r.Form.Has("use_crop") {
+		if r.FormValue("garment_name") != "Black Embellished Sandals" || r.FormValue("garment_role") != "shoes" || r.FormValue("use_crop") != "false" {
 			t.Fatalf("fields: %#v", r.Form)
 		}
 		if r.Form.Has("prompt") || r.Form.Has("parse_mask") || r.Form.Has("parse_labels") {
