@@ -148,17 +148,14 @@ func (p *Provider) generateGarmentExtraction(ctx context.Context, request *model
 	}
 	// use_crop 跟输入走：有 parse_mask 才裁区域；录衣单图是已主体商品图，强制裁切只会 applied=false。
 	useCrop := hasMask
-	// 整张标签图里有多块衣服。裁哪一块只看解析槽位，不看衣橱类目，也不按名称猜。
-	// 槽位缺失或不在上游 role 表里必须在出站前失败，省略 garment_role 会裁错区域。
+	// 显式角色原样下发，由上游解释和校验。未传角色的旧请求仍转换解析槽位，
+	// 避免标签裁图在没有角色时退回错误区域；不按衣橱类目或名称猜角色。
 	role, slotOK := garmentRoleFromSlot(meta.InventorySlot)
-	if useCrop && !slotOK {
+	if useCrop && meta.GarmentRole == "" && !slotOK {
 		return nil, provider.NotAttemptedf(provider.ErrorInvalidArgument, "VWorld_wardrobe-1.0 crop requires a supported inventory_slot, got %q", meta.InventorySlot)
 	}
 	if meta.GarmentRole != "" {
-		if slotOK && string(meta.GarmentRole) != role {
-			return nil, provider.NotAttempted(provider.ErrorInvalidArgument, "garment_role conflicts with inventory_slot")
-		}
-		role = string(meta.GarmentRole)
+		role = meta.GarmentRole
 	}
 
 	fields := map[string]string{
@@ -172,7 +169,8 @@ func (p *Provider) generateGarmentExtraction(ctx context.Context, request *model
 		"size":            garmentSize,
 	}
 	// Single-product registration forwards its explicit product role without enabling crop.
-	// OOTD still requires the parser slot; explicit roles must agree with that slot.
+	// Explicit roles are opaque upstream values; the model service owns validation.
+	// Only legacy callers without a role use the existing parser-slot conversion.
 	if role != "" {
 		fields["garment_role"] = role
 	}
@@ -384,13 +382,14 @@ func (p *Provider) doMultipart(ctx context.Context, path string, fields map[stri
 type garmentMeta struct {
 	Name          string
 	InventorySlot string
-	GarmentRole   garmentRole
+	GarmentRole   string
 	ParseLabels   map[string]string
 }
 
 // parseGarmentMeta 只认衣橱为拆衣服模型准备的 JSON；白底中文文案不能进 garment_extraction。
 // garment_role is an optional explicit VMind product role for registration.
-// inventory_slot remains authoritative for parser crops; conflicting explicit roles are rejected.
+// Explicit garment_role values pass through unchanged; validation belongs to VMind-Image.
+// inventory_slot is used only as a compatibility fallback when no role is supplied.
 // garment_category is not used to infer a role.
 // parse_labels 是类别编号到名称，和标签图一起交给上游裁区域。没有这张图时不能自己补。
 func parseGarmentMeta(text string) (garmentMeta, error) {
@@ -401,7 +400,7 @@ func parseGarmentMeta(text string) (garmentMeta, error) {
 	var payload struct {
 		GarmentName   string            `json:"garment_name"`
 		InventorySlot string            `json:"inventory_slot"`
-		GarmentRole   garmentRole       `json:"garment_role"`
+		GarmentRole   string            `json:"garment_role"`
 		ParseLabels   map[string]string `json:"parse_labels"`
 	}
 	if err := json.Unmarshal([]byte(text), &payload); err != nil {
@@ -411,11 +410,7 @@ func parseGarmentMeta(text string) (garmentMeta, error) {
 	if name == "" {
 		return garmentMeta{}, provider.NotAttempted(provider.ErrorInvalidArgument, "VWorld_wardrobe-1.0 garment_name is required")
 	}
-	role := garmentRole(strings.TrimSpace(string(payload.GarmentRole)))
-	if role != "" && !role.valid() {
-		return garmentMeta{}, provider.NotAttemptedf(provider.ErrorInvalidArgument, "unsupported garment_role %q", role)
-	}
-	return garmentMeta{Name: name, InventorySlot: strings.TrimSpace(payload.InventorySlot), GarmentRole: role, ParseLabels: payload.ParseLabels}, nil
+	return garmentMeta{Name: name, InventorySlot: strings.TrimSpace(payload.InventorySlot), GarmentRole: payload.GarmentRole, ParseLabels: payload.ParseLabels}, nil
 }
 
 // garmentRoleFromSlot 把人体解析槽位换成上游拆衣服已经接受的 garment_role。
