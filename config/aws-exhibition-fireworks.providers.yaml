@@ -1,0 +1,11 @@
+# 合并进美东路演 modelhub / ppe_exhibition / config-ppe_exhibition，保留无关配置。
+# 对外模型仍是 deepseek-v4.1-flash。上游改写到 Fireworks 美国专线，推理不走国内方舟。
+# 路演里若已有其他实例声明同一模型，删掉那条或用 model_routes 指到本实例。国内不要合并本文件。
+# upstream_model、base_url、api_key 是连接资源，合并后须滚动重启 us-east-2 的 tomirro/modelhub-service。
+providers:
+  fireworks_us_deepseek_v41_flash:
+    models: [deepseek-v4.1-flash]
+    openai:
+      api_key: "${FIREWORKS_API_KEY}"
+      base_url: https://us.api.fireworks.ai/inference/v1
+      upstream_model: accounts/fireworks/routers/deepseek-v4p1-flash-us

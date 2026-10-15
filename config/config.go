@@ -201,6 +201,9 @@ type ArkProviderConfig struct {
 type OpenAIProviderConfig struct {
 	APIKey  string `yaml:"api_key"`
 	BaseURL string `yaml:"base_url"`
+	// UpstreamModel 可选。对外 request.model 仍是 models 包常量；只改 Chat Completions 的 model 字段。
+	// 美东 Fireworks US-only 的路由 ID 与 deepseek-v4.1-flash 不同，国内方舟不能共用这个改写。
+	UpstreamModel string `yaml:"upstream_model"`
 }
 
 type LTXProviderConfig struct {
@@ -872,6 +875,10 @@ func validateProvider(name string, provider ProviderConfig) error {
 	case provider.OpenAI != nil:
 		if strings.TrimSpace(provider.OpenAI.APIKey) == "" {
 			return fmt.Errorf("provider %s api_key is required", name)
+		}
+		// upstream_model 把一个对外 ID 改写成单一上游部署；多个模型共用会无法判断改写对象。
+		if strings.TrimSpace(provider.OpenAI.UpstreamModel) != "" && len(provider.Models) != 1 {
+			return fmt.Errorf("provider %s upstream_model requires exactly one model", name)
 		}
 	case provider.ImageSeg != nil:
 		cfg := provider.ImageSeg

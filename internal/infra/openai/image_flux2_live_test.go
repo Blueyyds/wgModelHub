@@ -28,7 +28,7 @@ func TestLiveFlux2Klein9BImageEdit(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	p, err := New("flux2_klein_image", "placeholder-not-validated", baseURL)
+	p, err := New("flux2_klein_image", "placeholder-not-validated", baseURL, "")
 	if err != nil {
 		t.Fatal(err)
 	}

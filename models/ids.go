@@ -33,7 +33,7 @@ const (
 	DoubaoSeed21Pro = "doubao-seed-2.1-pro"
 	// DeepSeekV4Flash 对外真实模型名（方舟正式版）；上游 Responses 走独立推理 endpoint，禁止与预览版或其他 DeepSeek ID 互相 alias。
 	DeepSeekV4Flash = "deepseek-v4-flash"
-	// DeepSeekV41Flash 是独立真实模型 ID（方舟 V4.1）；必须走独立 Ark endpoint，不能覆盖或 alias 成 DeepSeekV4Flash。
+	// DeepSeekV41Flash 是独立真实模型 ID。国内方舟用独立 endpoint_id；美东 Fireworks US-only 用 openai.upstream_model 改写上游 ID。不能 alias 成 DeepSeekV4Flash。
 	DeepSeekV41Flash = "deepseek-v4.1-flash"
 	QwenFlash        = "qwen-flash"
 	Qwen3VLPlus      = "qwen3-vl-plus"

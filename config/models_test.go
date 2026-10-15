@@ -9,6 +9,32 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+func TestExhibitionFireworksDeepSeekOverlay(t *testing.T) {
+	raw, err := os.ReadFile("aws-exhibition-fireworks.providers.yaml")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var doc struct {
+		Providers map[string]ProviderConfig `yaml:"providers"`
+	}
+	if err := yaml.Unmarshal(raw, &doc); err != nil {
+		t.Fatal(err)
+	}
+	provider, ok := doc.Providers["fireworks_us_deepseek_v41_flash"]
+	if !ok {
+		t.Fatal("missing fireworks_us_deepseek_v41_flash")
+	}
+	if len(provider.Models) != 1 || provider.Models[0] != models.DeepSeekV41Flash {
+		t.Fatalf("models=%v", provider.Models)
+	}
+	if provider.OpenAI == nil || provider.OpenAI.BaseURL != "https://us.api.fireworks.ai/inference/v1" {
+		t.Fatalf("openai=%#v", provider.OpenAI)
+	}
+	if provider.OpenAI.UpstreamModel != "accounts/fireworks/routers/deepseek-v4p1-flash-us" {
+		t.Fatalf("upstream_model=%q", provider.OpenAI.UpstreamModel)
+	}
+}
+
 func TestDockerContextIncludesExampleYAMLForBuilderTests(t *testing.T) {
 	raw, err := os.ReadFile("../.dockerignore")
 	if err != nil {

@@ -363,7 +363,7 @@ func TestLedgerSkipsRealOpenAIEmptyPromptBeforeHTTP(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	}))
 	t.Cleanup(server.Close)
-	img, err := openai.New("openai_img", "k", server.URL)
+	img, err := openai.New("openai_img", "k", server.URL, "")
 	if err != nil {
 		t.Fatal(err)
 	}
