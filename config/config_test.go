@@ -453,6 +453,21 @@ func TestProviderSupportsVideoProviders(t *testing.T) {
 	}
 }
 
+func TestValidateRejectsOpenAIUpstreamModelWithMultipleModels(t *testing.T) {
+	cfg := validConfig()
+	cfg.Providers["fireworks_us_deepseek_v41_flash"] = ProviderConfig{
+		Models: []string{models.DeepSeekV41Flash, models.DeepSeekV4Flash},
+		OpenAI: &OpenAIProviderConfig{
+			APIKey:        "key",
+			BaseURL:       "https://us.api.fireworks.ai/inference/v1",
+			UpstreamModel: "accounts/fireworks/routers/deepseek-v4p1-flash-us",
+		},
+	}
+	if err := cfg.Validate(); err == nil || !strings.Contains(err.Error(), "upstream_model requires exactly one model") {
+		t.Fatalf("expected upstream_model single-model error, got %v", err)
+	}
+}
+
 func TestValidateRejectsArkEndpointIDWithMultipleModels(t *testing.T) {
 	cfg := validConfig()
 	cfg.Providers["ark_doubao_mini"] = ProviderConfig{

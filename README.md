@@ -144,6 +144,8 @@ Nacos 热更新；实例增删或凭据/端点等资源参数变化须滚动重�
 
 美东目标按 `wgPlatformInfra/config/services-tomirro/modelhub.yaml` 核对：代码分支是 `dev`，运行身份是 `US/ppe_exhibition`，ECS 为 `us-east-2` 的 `tomirro/modelhub-service`。AppConfig 为 `modelhub / ppe_exhibition / config-ppe_exhibition`（application `u8e7hop`、environment `em4ujml`、profile `n1chtur`），不是新加坡使用的 `modelhub / dev / config-dev`。发布前再从实际 ECS task 和 AppConfig metadata 核实身份；备份当前完整配置，合并 overlay 后执行 `ParseAndValidateYAML`。先让支持新 provider 的代码发布成功，再部署新配置并滚动重启；验收失败时恢复原配置版本和原健康镜像。仓库现有美东发布流程是 `.github/workflows/deploy-aws-exhibition.yml` → `tomirro-modelhub` 托管流水线，按正式 `dev` 的精确 SHA 发布。
 
+`config/aws-exhibition-fireworks.providers.yaml` 是美东 `deepseek-v4.1-flash` 的 Fireworks US-only 片段，实例键 `fireworks_us_deepseek_v41_flash`。合并进路演 AppConfig 时，同一模型不能再留给国内火山方舟实例；国内示例配置不要收录这条。`upstream_model` 与地址、密钥同属连接资源，改完须滚动重启。
+
 | 服务 | ModelHub ID | G6 路径 | 输出 |
 | --- | --- | --- | --- |
 | HumanParser | `human-parser`、`human_parse` | `/human-parser/human_parser/predict` | 解析 JSON |

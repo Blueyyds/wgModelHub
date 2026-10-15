@@ -119,7 +119,7 @@ func TestGenerateImagePostsGenerationsJSON(t *testing.T) {
 	}))
 	defer server.Close()
 
-	p, err := New("ominilink_gpt_image", "secret", server.URL)
+	p, err := New("ominilink_gpt_image", "secret", server.URL, "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -202,7 +202,7 @@ func TestGenerateImageEditsWithInlineReference(t *testing.T) {
 	}))
 	defer server.Close()
 
-	p, err := New("ominilink_gpt_image", "secret", server.URL+"/v1")
+	p, err := New("ominilink_gpt_image", "secret", server.URL+"/v1", "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -268,7 +268,7 @@ func TestGenerateImageEditsWithMultipleReferencesPreservesOrder(t *testing.T) {
 	}))
 	defer server.Close()
 
-	p, err := New("ominilink_gpt_image", "secret", server.URL)
+	p, err := New("ominilink_gpt_image", "secret", server.URL, "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -317,7 +317,7 @@ func TestGenerateImageEditsFetchesURIReference(t *testing.T) {
 	defer server.Close()
 	serverURL = server.URL
 
-	p, err := New("ominilink_gpt_image", "secret", server.URL)
+	p, err := New("ominilink_gpt_image", "secret", server.URL, "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -360,7 +360,7 @@ func TestGenerateImageEditsUsesHTTPContentTypeForURIWithoutMIME(t *testing.T) {
 	defer server.Close()
 	serverURL = server.URL
 
-	p, err := New("ominilink_gpt_image", "secret", server.URL)
+	p, err := New("ominilink_gpt_image", "secret", server.URL, "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -402,7 +402,7 @@ func TestGenerateImageEditsSniffsURIWhenHTTPContentTypeMissing(t *testing.T) {
 	defer server.Close()
 	serverURL = server.URL
 
-	p, err := New("ominilink_gpt_image", "secret", server.URL)
+	p, err := New("ominilink_gpt_image", "secret", server.URL, "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -442,7 +442,7 @@ func TestGenerateImageEditsIgnoresNonImageHTTPContentType(t *testing.T) {
 	defer server.Close()
 	serverURL = server.URL
 
-	p, err := New("ominilink_gpt_image", "secret", server.URL)
+	p, err := New("ominilink_gpt_image", "secret", server.URL, "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -472,7 +472,7 @@ func TestGenerateImageEditsRejectsURIReferenceWithNonImageContent(t *testing.T) 
 	defer server.Close()
 	serverURL = server.URL
 
-	p, err := New("ominilink_gpt_image", "secret", server.URL)
+	p, err := New("ominilink_gpt_image", "secret", server.URL, "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -504,7 +504,7 @@ func TestGenerateImageEditsRejectsURIReferenceWhenContentTypeAndBodyNotImage(t *
 	defer server.Close()
 	serverURL = server.URL
 
-	p, err := New("ominilink_gpt_image", "secret", server.URL)
+	p, err := New("ominilink_gpt_image", "secret", server.URL, "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -554,7 +554,7 @@ func TestGenerateImageRejectsEmptyURIReferenceBeforeEdits(t *testing.T) {
 	defer server.Close()
 	serverURL = server.URL
 
-	p, err := New("ominilink_gpt_image", "secret", server.URL)
+	p, err := New("ominilink_gpt_image", "secret", server.URL, "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -587,7 +587,7 @@ func TestGenerateImageFetchesURLResult(t *testing.T) {
 	defer server.Close()
 	serverURL = server.URL
 
-	p, err := New("ominilink_gpt_image", "secret", server.URL+"/v1")
+	p, err := New("ominilink_gpt_image", "secret", server.URL+"/v1", "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -609,7 +609,7 @@ func TestGenerateImageHTTPErrorMapped(t *testing.T) {
 	}))
 	defer server.Close()
 
-	p, err := New("ominilink_gpt_image", "secret", server.URL)
+	p, err := New("ominilink_gpt_image", "secret", server.URL, "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -629,7 +629,7 @@ func TestGenerateImageFlux2KleinRejectsNoReferenceBeforeHTTP(t *testing.T) {
 	}))
 	defer server.Close()
 
-	p, err := New("flux2_klein_image", "placeholder", server.URL)
+	p, err := New("flux2_klein_image", "placeholder", server.URL, "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -688,7 +688,7 @@ func TestGenerateImageFlux2KleinEditsSingleReference(t *testing.T) {
 	}))
 	defer server.Close()
 
-	p, err := New("flux2_klein_image", "placeholder", server.URL+"/flux2/v1")
+	p, err := New("flux2_klein_image", "placeholder", server.URL+"/flux2/v1", "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -744,7 +744,7 @@ func TestGenerateImageFlux2KleinEditsMultipleReferencesPreservesOrder(t *testing
 	}))
 	defer server.Close()
 
-	p, err := New("flux2_klein_image", "placeholder", server.URL)
+	p, err := New("flux2_klein_image", "placeholder", server.URL, "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -773,7 +773,7 @@ func TestGenerateImageEditsGPTImage2OmitsResponseFormat(t *testing.T) {
 	}))
 	defer server.Close()
 
-	p, err := New("ominilink_gpt_image", "secret", server.URL)
+	p, err := New("ominilink_gpt_image", "secret", server.URL, "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -808,7 +808,7 @@ func TestGenerateImageGPTImage25RoutesModelExact(t *testing.T) {
 			}))
 			defer server.Close()
 
-			p, err := New("async_gpt_image", "secret", server.URL+"/v1")
+			p, err := New("async_gpt_image", "secret", server.URL+"/v1", "")
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -853,7 +853,7 @@ func TestGenerateImageGPTImage25RoutesModelExact(t *testing.T) {
 			}))
 			defer server.Close()
 
-			p, err := New("async_gpt_image", "secret", server.URL+"/v1")
+			p, err := New("async_gpt_image", "secret", server.URL+"/v1", "")
 			if err != nil {
 				t.Fatal(err)
 			}

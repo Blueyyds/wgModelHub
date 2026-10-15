@@ -304,6 +304,39 @@ func TestBuildRequestBodyGLMThinkingUsesEffort(t *testing.T) {
 	}
 }
 
+func TestBuildRequestBodyDeepSeekV41UsesMaxAndUpstreamModel(t *testing.T) {
+	p := &Provider{
+		baseURL:       "https://us.api.fireworks.ai/inference/v1",
+		upstreamModel: "accounts/fireworks/routers/deepseek-v4p1-flash-us",
+	}
+	high := p.buildRequestBody(models.DeepSeekV41Flash, textRequest(&modelhubv2.TextOutput{
+		ThinkingLevel: modelhubv2.ThinkingLevel_THINKING_LEVEL_HIGH,
+	}), false)
+	if high["model"] != "accounts/fireworks/routers/deepseek-v4p1-flash-us" {
+		t.Fatalf("model = %#v", high["model"])
+	}
+	if high["reasoning_effort"] != "max" {
+		t.Fatalf("reasoning_effort = %#v, want max", high["reasoning_effort"])
+	}
+	if _, ok := high["enable_thinking"]; ok {
+		t.Fatalf("DeepSeek must not receive enable_thinking: %#v", high["enable_thinking"])
+	}
+
+	off := p.buildRequestBody(models.DeepSeekV41Flash, textRequest(&modelhubv2.TextOutput{
+		Thinking: modelhubv2.ThinkingMode_THINKING_MODE_DISABLED,
+	}), false)
+	if off["reasoning_effort"] != "none" {
+		t.Fatalf("reasoning_effort = %#v, want none", off["reasoning_effort"])
+	}
+
+	unset := p.buildRequestBody(models.DeepSeekV41Flash, textRequest(&modelhubv2.TextOutput{
+		Thinking: modelhubv2.ThinkingMode_THINKING_MODE_ENABLED,
+	}), false)
+	if _, ok := unset["reasoning_effort"]; ok {
+		t.Fatalf("enabled without level must keep upstream default: %#v", unset["reasoning_effort"])
+	}
+}
+
 func assertNoGLMThinkingType(t *testing.T, body map[string]any) {
 	t.Helper()
 	if _, ok := body["enable_thinking"]; ok {

@@ -151,7 +151,7 @@ func buildProvider(ctx context.Context, name string, providerCfg config.Provider
 		return provider.Set{Text: client}, nil
 	case providerCfg.OpenAI != nil:
 		cfg := providerCfg.OpenAI
-		client, err := openai.New(name, cfg.APIKey, cfg.BaseURL)
+		client, err := openai.New(name, cfg.APIKey, cfg.BaseURL, cfg.UpstreamModel)
 		if err != nil {
 			return provider.Set{}, err
 		}

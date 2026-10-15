@@ -25,13 +25,14 @@ const DefaultBaseURL = "https://api.openai.com/v1"
 
 // Provider 适配 OpenAI-compatible 端点：文本走 /chat/completions，生图按有无参考图走 /images/generations 或 /images/edits。
 type Provider struct {
-	name    string
-	apiKey  string
-	baseURL string
-	client  *http.Client
+	name          string
+	apiKey        string
+	baseURL       string
+	upstreamModel string
+	client        *http.Client
 }
 
-func New(name, apiKey, baseURL string) (*Provider, error) {
+func New(name, apiKey, baseURL, upstreamModel string) (*Provider, error) {
 	if strings.TrimSpace(apiKey) == "" {
 		return nil, provider.New(provider.ErrorConfiguration, name+" API key is required")
 	}
@@ -39,10 +40,11 @@ func New(name, apiKey, baseURL string) (*Provider, error) {
 		baseURL = DefaultBaseURL
 	}
 	return &Provider{
-		name:    name,
-		apiKey:  apiKey,
-		baseURL: strings.TrimRight(baseURL, "/"),
-		client:  telemetry.NewHTTPClient(),
+		name:          name,
+		apiKey:        apiKey,
+		baseURL:       strings.TrimRight(baseURL, "/"),
+		upstreamModel: strings.TrimSpace(upstreamModel),
+		client:        telemetry.NewHTTPClient(),
 	}, nil
 }
 
@@ -145,7 +147,8 @@ func (p *Provider) buildRequestBody(model string, request *modelhubv2.GenerateRe
 	}
 	text := request.GetOutput().GetText()
 	body := map[string]any{
-		"model":  model,
+		// 思考档位仍按对外模型 ID 判断；upstream_model 只替换上游认的部署名。
+		"model":  p.chatModel(model),
 		"stream": stream,
 	}
 	if stream {
@@ -266,6 +269,9 @@ func applyTextThinking(body map[string]any, model string, text *modelhubv2.TextO
 		applyClaudeThinking(body, choice)
 	case models.GLM53Flash:
 		applyGLMThinking(body, choice)
+	case models.DeepSeekV41Flash:
+		// 统一协议没有 max 档。HIGH 对应 DeepSeek 的 max，避免美东只落到默认 high。
+		applyDeepSeekV41Thinking(body, choice)
 	case models.Qwen38Flash:
 		applyQwen38Thinking(body, choice)
 	case models.Qwen35Flash, models.Qwen37Flash, models.Qwen3VLPlus:
@@ -337,6 +343,40 @@ func applyGLMThinking(body map[string]any, choice thinking.Choice) {
 		return
 	}
 	body["reasoning_effort"] = effort
+}
+
+// applyDeepSeekV41Thinking 只发 reasoning_effort。DashScope 的 enable_thinking 不是这条协议。
+// 关思考用 none；没填档位则不发，留给上游默认 high，而不是偷偷升到 max。
+func applyDeepSeekV41Thinking(body map[string]any, choice thinking.Choice) {
+	effort, ok := deepSeekV41ReasoningEffort(choice)
+	if !ok {
+		return
+	}
+	body["reasoning_effort"] = effort
+}
+
+func deepSeekV41ReasoningEffort(choice thinking.Choice) (string, bool) {
+	if choice.Off {
+		return "none", true
+	}
+	switch choice.Level {
+	case modelhubv2.ThinkingLevel_THINKING_LEVEL_MINIMAL, modelhubv2.ThinkingLevel_THINKING_LEVEL_LOW:
+		return "low", true
+	case modelhubv2.ThinkingLevel_THINKING_LEVEL_MEDIUM:
+		return "high", true
+	case modelhubv2.ThinkingLevel_THINKING_LEVEL_HIGH:
+		return "max", true
+	default:
+		return "", false
+	}
+}
+
+// chatModel 在配置了 upstream_model 时改写 Chat Completions 的 model。生图仍用对外 ID。
+func (p *Provider) chatModel(model string) string {
+	if p != nil && p.upstreamModel != "" {
+		return p.upstreamModel
+	}
+	return model
 }
 
 func glmReasoningEffort(choice thinking.Choice) (string, bool) {
